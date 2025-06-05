@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "griblet"
+version = "0.1.0"
+description = "Distill the optimal computation tree from a field of possibilities."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+authors = [
+  { name="Dag Evensberget", email="dag.evensberget@gmail.com" }
+]
+dependencies = [
+    "numpy",
+    "astropy"
+]
+
+[project.urls]
+Homepage = "https://github.com/svaberg/griblet"
+Repository = "https://github.com/svaberg/griblet"
+Issues = "https://github.com/svaberg/griblet/issues"
