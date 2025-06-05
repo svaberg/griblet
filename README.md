@@ -10,16 +10,12 @@ Griblet is a dynamic, cache-aware calculation engine for building and evaluating
 - Clean separation of recipes, cache, loader, and evaluation logic
 - Suitable for scientific postprocessing, engineering workflows, and flexible data rocessing pipelines
 
-## Quickstart
-
-Clone and install in editable mode:
-
+## Developer install
 ```bash
 git clone https://github.com/svaberg/griblet.git
 cd griblet
-pip install -e .
+pip install -e '.[dev]'
 ```
-
 ## Example
 
 See [`examples/demo_griblet.py`](examples/demo_griblet.py) for a demonstration.
