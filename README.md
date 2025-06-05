@@ -1,4 +1,5 @@
-# griblet
+
+#  <img src="griblet-logo-256.png" alt="griblet logo" style="vertical-align:middle;" width=60/> griblet 
 
 **Carve computation trees from a burl of dependencies.**
 

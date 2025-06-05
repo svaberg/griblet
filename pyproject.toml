@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "griblet"
 version = "0.1.0"
-description = "Distill the optimal computation tree from a field of possibilities."
+description = "Carve computation trees from a burl of dependencies."
 readme = "README.md"
 requires-python = ">=3.8"
 license = { file = "LICENSE" }
