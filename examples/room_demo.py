@@ -2,11 +2,8 @@ import numpy as np
 import astropy.units as u
 
 from griblet.computation_graph import ComputationGraph
-from griblet.field_cache import FieldCache
 from griblet.loader import BaseLoader
 
-import numpy as np
-import astropy.units as u
 
 class RoomLoader(BaseLoader):
     def __init__(self):
@@ -19,9 +16,8 @@ class RoomLoader(BaseLoader):
             'perimeter': np.array([18.0]) * u.m,
         }
 
+
 def make_room_recipes_graph():
-    import astropy.units as u
-    from griblet.computation_graph import ComputationGraph
 
     cg = ComputationGraph()
 
