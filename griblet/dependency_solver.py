@@ -73,10 +73,16 @@ class DependencySolver:
                 logger.debug(f"  Recipe {i+1} for '{target}' failed")
         path.remove(target)
 
+        
         if best_tree is None:
             logger.warning(f"Cannot resolve field '{target}' (all recipes failed)")
+            missing = [r['deps'] for r in self.graph.recipes.get(target, []) if r['deps']]
+            if not self.graph.recipes.get(target, []):
+                msg = f"Cannot resolve field '{target}' (no recipes at all)."
+            else:
+                msg = f"Cannot resolve field '{target}' (all recipes failed; dependencies tried: {missing})."
             self.memo[memo_key] = (float("inf"), None)
-            raise UnresolvableFieldError(f"Cannot resolve field '{target}'")
+            raise UnresolvableFieldError(msg)
         else:
             self.memo[memo_key] = (best_cost, best_tree)
             logger.debug(f"Field '{target}' resolved, best_cost={best_cost}")
