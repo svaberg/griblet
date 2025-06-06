@@ -6,7 +6,7 @@ from griblet.dependency_solver import DependencySolver
 from griblet.evaluate_tree import evaluate_tree
 
 # Import the unified graph builder from your other example.
-from demo_room_graph import make_room_graph
+from room_demo import make_room_graph
 
 def print_tree(node, indent=0):
     if node is None:
@@ -20,9 +20,9 @@ def print_tree(node, indent=0):
         print_tree(dep, indent + 4)
 
 if __name__ == "__main__":
-    g, cache = make_room_graph()  # Updated: make_room_graph returns (graph, cache)
+    computation_graph, field_cache = make_room_graph()
 
-    solver = DependencySolver(g)
+    solver = DependencySolver(computation_graph)
     cost, tree = solver.resolve_field('volume')
 
     print("\n=== Dependency Solver Demo (Room Volume, multiple paths) ===\n")
@@ -31,11 +31,11 @@ if __name__ == "__main__":
 
     # Evaluate and show caching/cost in action
     print("\nFirst evaluation (should trigger file read):")
-    vol_value = evaluate_tree(tree, g)
+    vol_value = evaluate_tree(tree, computation_graph)
     print("Volume:", vol_value)
 
     print("\nSecond evaluation (should be cached, fast):")
-    vol_value2 = evaluate_tree(tree, g)
+    vol_value2 = evaluate_tree(tree, computation_graph)
     print("Volume:", vol_value2)
 
     print("\nVolume in liters:")

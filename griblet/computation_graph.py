@@ -4,7 +4,7 @@ class ComputationGraph:
     def __init__(self):
         self.recipes = defaultdict(list)
 
-    def add_recipe(self, output, deps, func, cost=1.0, metadata=None):
+    def add_recipe(self, output, func, *, deps=None, cost=1.0, metadata=None):
         """
         Add a recipe for how to compute `output`.
         - output: field name
@@ -13,6 +13,9 @@ class ComputationGraph:
         - cost: number or callable (no-arg or with field name)
         - metadata: optional dict with other info
         """
+        if deps is None:
+            deps = []
+            
         recipe = dict(
             deps=list(deps),
             func=func,
