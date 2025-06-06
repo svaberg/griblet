@@ -1,6 +1,8 @@
+import itertools
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+
 
 
 def flattened_dependency_graph(computation_graph):
@@ -15,6 +17,16 @@ def flattened_dependency_graph(computation_graph):
                 DG.add_edge(dep, output)
     return DG
 
+def collect_subtree_nodes_edges(tree):
+    nodes = set()
+    edges = set()
+    def visit(node):
+        nodes.add(node.field)
+        for dep in getattr(node, "deps", []):
+            edges.add((dep.field, node.field))
+            visit(dep)
+    visit(tree)
+    return nodes, edges
 
 def plot_flattened_computation_graph(
     computation_graph,
@@ -186,15 +198,11 @@ def plot_recipe_colored_edges_curved(computation_graph, ax, node_pos=None):
     ax.axis("off")
 
 
-import networkx as nx
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-import itertools
-
 def plot_computation_paths(
     computation_graph,
     trees,
     ax,
+    *,
     labels=None,
     colors=None,
     title="Computation Paths",
@@ -211,27 +219,18 @@ def plot_computation_paths(
     colors: list of colors (optional)
     """
     # Build flattened dependency graph
-    DG = nx.DiGraph()
-    for node, recipes in computation_graph.recipes.items():
-        for recipe in recipes:
-            for dep in recipe['deps']:
-                DG.add_edge(dep, node)
+    DG = flattened_dependency_graph(computation_graph)
+    # DG = nx.DiGraph()
+    # for node, recipes in computation_graph.recipes.items():
+    #     for recipe in recipes:
+    #         for dep in recipe['deps']:
+    #             DG.add_edge(dep, node)
     # Compute layout
     pos = nx.spring_layout(DG, seed=42)
 
     # Collect union of all nodes/edges in any tree
     all_tree_nodes = set()
     all_tree_edges = set()
-    def collect_subtree_nodes_edges(tree):
-        nodes = set()
-        edges = set()
-        def visit(node):
-            nodes.add(node.field)
-            for dep in getattr(node, "deps", []):
-                edges.add((dep.field, node.field))
-                visit(dep)
-        visit(tree)
-        return nodes, edges
 
     # Process all trees: get per-tree nodes/edges
     trees_nodes_edges = [collect_subtree_nodes_edges(t) for t in trees]
@@ -240,25 +239,27 @@ def plot_computation_paths(
         all_tree_edges.update(edges)
 
     # Draw all nodes in lightgray, to show the union graph background
-    nx.draw_networkx_nodes(DG, pos, node_color="lightgray", node_size=node_size, ax=ax, edgecolors="black")
-    nx.draw_networkx_labels(DG, pos, font_size=font_size, font_weight="bold", ax=ax)
-
     # Draw all possible edges in lightgray (flattened)
-    nx.draw_networkx_edges(DG, pos, edgelist=DG.edges, edge_color="lightgray", width=2, arrows=True, arrowstyle="->", ax=ax)
+    nx.draw_networkx_nodes(DG, pos, node_color="lightgray", node_size=node_size, ax=ax)
+    nx.draw_networkx_labels(DG, pos, font_size=font_size, ax=ax)
+    nx.draw_networkx_edges(DG, pos, edgelist=DG.edges, edge_color="gray", 
+                           width=3, arrows=True, arrowstyle="->", ax=ax,
+                           arrowsize=26)
 
     # Prepare colors, labels
     if colors is None:
-        color_palette = itertools.cycle(plt.cm.tab10.colors)
-        colors = [next(color_palette) for _ in trees]
+        colors = [f"C{i}" for i in range(len(trees))]
     if labels is None:
         labels = [f"Path {i+1}" for i in range(len(trees))]
 
-    rad_vals = [-0.3, 0.3, 0.6, -0.6, 0.9, -0.9, 0.1, -0.1]
+    rad_vals = [-0.1, 0.1, 0.3, -0.3, 0.2, -0.2]
     legend_elements = [Line2D([0], [0], marker='o', color='w', label='All possible dependencies',
                               markerfacecolor='lightgray', markersize=12)]
     # Draw each tree's edges in its own color/curve
     for i, ((nodes, edges), color, label) in enumerate(zip(trees_nodes_edges, colors, labels)):
         rad = rad_vals[i % len(rad_vals)]
+        # import pdb; pdb.set_trace()
+        print(color, label)
         nx.draw_networkx_edges(
             DG, pos, edgelist=edges,
             edge_color=color, width=3, ax=ax,
@@ -269,7 +270,7 @@ def plot_computation_paths(
 
     # Highlight tree nodes (optional: only those in any tree) with white faces, colored border
     nx.draw_networkx_nodes(DG, pos, nodelist=list(all_tree_nodes), node_color="white",
-                           node_size=node_size, edgecolors="black", linewidths=3, ax=ax)
+                           node_size=node_size, edgecolors="lightgray", linewidths=3, ax=ax)
 
     ax.legend(handles=legend_elements, loc="upper left")
     ax.set_title(title)
