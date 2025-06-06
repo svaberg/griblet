@@ -1,16 +1,18 @@
 from collections import defaultdict
 
 class ComputationGraph:
-    def __init__(self):
+    def __init__(self, other_graph=None):
         self.recipes = defaultdict(list)
+        if other_graph is not None:
+            self.merge(other_graph)
 
-    def add_recipe(self, output, func, *, deps=None, cost=1.0, metadata=None):
+    def add_recipe(self, field, func, *, deps=None, cost=1.0, metadata=None):
         """
         Add a recipe for how to compute `output`.
-        - output: field name
-        - deps: list of dependency field names (all required)
-        - func: function accepting resolved dependencies in order
-        - cost: number or callable (no-arg or with field name)
+        - field: field name of this recipe's output (e.g. 'volume')
+        - func: function that computes the output from its dependencies
+        - deps: list of dependency field names (e.g. ['length', 'width'])
+        - cost: fixed cost to compute this field (or a callable that returns the cost)
         - metadata: optional dict with other info
         """
         if deps is None:
@@ -22,8 +24,17 @@ class ComputationGraph:
             cost=cost,
             metadata=metadata or {},
         )
-        self.recipes[output].append(recipe)
+        self.recipes[field].append(recipe)
 
+    def merge(self, other):
+        """
+        Merge all recipes from another ComputationGraph into this one (mutating self).
+        Returns self for method chaining.
+        """
+        for field, recipes in other.recipes.items():
+            self.recipes[field].extend([r.copy() for r in recipes])
+        return self
+        
     def add_loader_fields(self, loader):
         """
         Add fields provided by a loader to the computation graph.
