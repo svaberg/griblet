@@ -24,18 +24,29 @@ class ComputationGraph:
         )
         self.recipes[output].append(recipe)
 
-    def add_loader_fields(self, loader, field_cache):
+    def add_loader_fields(self, loader):
         """
         Add fields provided by a loader to the computation graph.
-        This allows the graph to resolve these fields directly.
+        Each loader field gets a trivial recipe that just loads it.
         """
         for field in loader.fields():
             self.add_recipe(
                 field,
-                lambda field=field: field_cache.get(field),
-                cost=lambda field=field: field_cache.cost(field),
+                lambda field=field: loader.get(field),
+                cost=loader.cost(field),  # <-- Evaluate once, store the value!
                 metadata={'description': f'Loader'},
             )
+
+    def update_all_costs(self, loader):
+        """
+        Update costs for all loader fields from the current state of the loader.
+        """
+        for field, recipe_list in self.recipes.items():
+            for recipe in recipe_list:
+                # You may want to check if this recipe is a loader recipe (e.g. by metadata or a flag)
+                if recipe['metadata'].get('description', '').startswith('Loader'):
+                    recipe['cost'] = loader.cost(field)
+
 
     def list_fields(self):
         return set(self.recipes)
