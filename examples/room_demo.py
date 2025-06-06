@@ -22,7 +22,7 @@ class RoomLoader:
         return list(self._fields.keys())
 
 
-def make_room_graph(computation_graph):
+def add_room_recipes(computation_graph):
 
     def area_from_lw(length, width): return length * width
     computation_graph.add_recipe('area', area_from_lw, deps=['length', 'width'], cost=2.0, metadata={'unit': u.m**2})
@@ -38,5 +38,3 @@ def make_room_graph(computation_graph):
 
     def volume_from_lw_ceil(length, width, ceiling_height): return length * width * ceiling_height
     computation_graph.add_recipe('volume', volume_from_lw_ceil, deps=['length', 'width', 'height'], cost=3.0, metadata={'unit': u.m**3})
-
-    return computation_graph

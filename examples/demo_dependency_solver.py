@@ -6,7 +6,7 @@ from griblet.dependency_solver import DependencySolver
 from griblet.evaluate_tree import evaluate_tree
 
 # Import the unified graph builder from your other example.
-from room_demo import make_room_graph
+from room_demo import add_room_recipes
 
 def print_tree(node, indent=0):
     if node is None:
@@ -20,7 +20,7 @@ def print_tree(node, indent=0):
         print_tree(dep, indent + 4)
 
 if __name__ == "__main__":
-    computation_graph, field_cache = make_room_graph()
+    computation_graph, field_cache = add_room_recipes()
 
     solver = DependencySolver(computation_graph)
     cost, tree = solver.resolve_field('volume')
