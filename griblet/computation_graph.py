@@ -8,7 +8,7 @@ class ComputationGraph:
 
     def add_recipe(self, field, func, *, deps=None, cost=1.0, metadata=None):
         """
-        Add a recipe for how to compute `output`.
+        Add a recipe for how to compute `field`.
         - field: field name of this recipe's output (e.g. 'volume')
         - func: function that computes the output from its dependencies
         - deps: list of dependency field names (e.g. ['length', 'width'])
@@ -35,28 +35,16 @@ class ComputationGraph:
             self.recipes[field].extend([r.copy() for r in recipes])
         return self
         
-    def add_loader_fields(self, loader):
-        """
-        Add fields provided by a loader to the computation graph.
-        Each loader field gets a trivial recipe that just loads it.
-        """
-        for field in loader.fields():
-            self.add_recipe(
-                field,
-                lambda field=field: loader.get(field),
-                cost=loader.cost(field),  # <-- Evaluate once, store the value!
-                metadata={'description': f'Loader'},
-            )
-
-    def update_all_costs(self, loader):
-        """
-        Update costs for all loader fields from the current state of the loader.
-        """
-        for field, recipe_list in self.recipes.items():
-            for recipe in recipe_list:
-                # You may want to check if this recipe is a loader recipe (e.g. by metadata or a flag)
-                if recipe['metadata'].get('description', '').startswith('Loader'):
-                    recipe['cost'] = loader.cost(field)
+    # def update_all_costs(self, loader):
+    #     """
+    #     Update costs for all loader fields from the current state of the loader.
+    #     TODO this is not used or even working yet.
+    #     """
+    #     for field, recipe_list in self.recipes.items():
+    #         for recipe in recipe_list:
+    #             # You may want to check if this recipe is a loader recipe (e.g. by metadata or a flag)
+    #             if recipe['metadata'].get('description', '').startswith('Loader'):
+    #                 recipe['cost'] = loader.cost(field)
 
 
     def list_fields(self):

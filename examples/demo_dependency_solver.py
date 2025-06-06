@@ -4,7 +4,7 @@ import astropy.units as u
 from griblet.dependency_solver import DependencySolver
 from griblet.computation_graph import ComputationGraph
 from griblet.evaluate_tree import evaluate_tree
-from room_demo import add_room_recipes, RoomLoader
+from room_demo import make_room_recipes_graph, RoomLoader
 
 def print_tree(node, indent=0):
     if node is None:
@@ -20,11 +20,12 @@ def print_tree(node, indent=0):
 if __name__ == "__main__":
 
     loader = RoomLoader()
-    computation_graph = ComputationGraph()
-    computation_graph.add_loader_fields(loader)
-    add_room_recipes(computation_graph)
-
-    # 2. Dependency solve as before
+    loader_graph = loader.as_graph()
+    computation_graph = ComputationGraph(loader_graph)
+    room_recipies_graph = make_room_recipes_graph()
+    computation_graph.merge(room_recipies_graph)
+    
+        # 2. Dependency solve as before
     solver = DependencySolver(computation_graph)
     cost, tree = solver.resolve_field('volume')
 

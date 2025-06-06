@@ -7,22 +7,23 @@ logging.getLogger('matplotlib').setLevel(logging.WARNING)
 from griblet.computation_graph import ComputationGraph
 from griblet.dependency_solver import DependencySolver
 
-from room_demo import add_room_recipes, RoomLoader
+from room_demo import make_room_recipes_graph, RoomLoader
 import plots
 
 
 if __name__ == "__main__":
-    computation_graph = ComputationGraph()
     loader = RoomLoader()
-
-    computation_graph.add_loader_fields(loader)
+    loader_graph = loader.as_graph()
+    computation_graph = ComputationGraph(loader_graph)
+    
     print(computation_graph)
     fig, ax = plt.subplots()
     plots.plot_recipe_colored_edges_curved(computation_graph, ax=ax)
     plt.savefig("flattened.png", dpi=150)
 
 
-    add_room_recipes(computation_graph)
+    room_recipies_graph = make_room_recipes_graph()
+    computation_graph.merge(room_recipies_graph)
     print(computation_graph)
     fig, ax = plt.subplots()
     plots.plot_recipe_colored_edges_curved(computation_graph, ax=ax)
