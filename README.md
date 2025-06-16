@@ -1,5 +1,10 @@
+<table>
+<tr>
+<td><img src="griblet-logo-256.png" alt="griblet logo" width="128"/></td>
+<td><h1>griblet</h1></td>
+</tr>
+</table>
 
-#  <img src="griblet-logo-256.png" alt="griblet logo" style="vertical-align:middle;" width=60/> griblet 
 
 **Carve computation trees from a burl of dependencies.**
 
