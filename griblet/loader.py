@@ -1,10 +1,21 @@
+"""
+Loader abstractions for injecting external data into a ComputationGraph.
+
+Defines loader classes that expose externally stored field values as
+zero-dependency computation recipes with associated access costs.
+Supports simple per-field loading and block-style bulk loading with caching.
+"""
+
 from typing import Any, Dict, Union, List
 from griblet.computation_graph import ComputationGraph  # avoid circular import
 
+
 class BaseLoader:
     """
-    Abstract base class for field loaders.
-    Subclasses must implement `load(field)`, and optionally override `fields()` and `cost()`.
+    Base class for field loaders.
+
+    Maps external data sources to zero-dependency graph recipes.
+    Subclasses provide loading logic, available fields, and access cost.
     """
     def __init__(self):
         # By default, an empty _fields dict (can be overridden by subclass)
@@ -52,52 +63,51 @@ class BaseLoader:
         return cg
 
 
-# class SimpleArrayLoader(BaseLoader):
-#     """
-#     Loader that simulates loading a named field from a data source (dict-like or file handle).
+from typing import Any, Dict, List
+from griblet.computation_graph import ComputationGraph
 
-#     Parameters
-#     ----------
-#     data_source : dict[str, Any]
-#         Source of fields.
+class BlockLoader:
+    """
+    Block-based loader with implicit caching.
 
-#     Returns
-#     -------
-#     Any
-#         The value for the given field.
-#     """
-#     def __init__(self, data_source: Dict[str, Any]):
-#         super().__init__()
-#         self.data_source = data_source
+    Simulates bulk I/O by loading all fields on first access, then serving
+    subsequent accesses from memory at reduced cost. Exposes each field
+    as a zero-dependency recipe.
+    """
+    def __init__(self, file_handle: Dict[str, Any], load_cost=1.0, cached_cost=0.05):
+        """
+        file_handle: dict-like, mapping field names to values (can be adapted for real files)
+        load_cost: cost to access a field if not yet loaded (simulates slow IO)
+        cached_cost: cost for future accesses (simulates cheap in-memory access)
+        """
+        self.file_handle = file_handle
+        self._cache = {}          # field -> value
+        self._loaded = False
+        self.load_cost = load_cost
+        self.cached_cost = cached_cost
 
-#     def load(self, field: str) -> Any:
-#         print(f"Loading field '{field}' from file...")
-#         return self.data_source[field]
+    def load(self, field: str) -> Any:
+        if not self._loaded:
+            print(f"BlockLoader: Loading all fields in a single operation.")
+            self._cache = dict(self.file_handle)
+            self._loaded = True
+        return self._cache[field]
 
+    def cost(self, field: str) -> float:
+        return self.cached_cost if self._loaded else self.load_cost
 
-# class BlockLoader(BaseLoader):
-#     """
-#     Loader that loads all fields as a block from a data source on first access.
+    def fields(self) -> List[str]:
+        return list(self.file_handle.keys())
 
-#     Parameters
-#     ----------
-#     file_handle : dict[str, Any]
-#         Source of fields.
-
-#     Returns
-#     -------
-#     dict[str, Any]
-#         Dictionary mapping all available field names to their values.
-#     """
-#     def __init__(self, file_handle: Dict[str, Any]):
-#         super().__init__()
-#         self.file_handle = file_handle
-#         self._loaded = False
-#         self._data: Dict[str, Any] = {}
-
-#     def load(self, field: str) -> Dict[str, Any]:
-#         if not self._loaded:
-#             print(f"Loading block from file for fields: {list(self.file_handle.keys())}")
-#             self._data = {key: self.file_handle[key] for key in self.file_handle}
-#             self._loaded = True
-#         return self._data
+    def as_graph(self) -> ComputationGraph:
+        cg = ComputationGraph()
+        for field in self.fields():
+            # bind field name for lambda (avoid late-binding bug)
+            cg.add_recipe(
+                output=field,
+                func=lambda field=field: self.load(field),
+                deps=[],
+                cost=lambda field=field: self.cost(field),
+                metadata={'description': 'BlockLoader'}
+            )
+        return cg

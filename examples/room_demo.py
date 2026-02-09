@@ -1,8 +1,8 @@
 import numpy as np
 import astropy.units as u
 
-from griblet.computation_graph import ComputationGraph
-from griblet.loader import BaseLoader
+from griblet import ComputationGraph
+from griblet import BaseLoader
 
 
 class RoomLoader(BaseLoader):

@@ -1,9 +1,8 @@
-import numpy as np
 import astropy.units as u
 
-from griblet.dependency_solver import DependencySolver
-from griblet.computation_graph import ComputationGraph
-from griblet.evaluate_tree import evaluate_tree
+from griblet import DependencySolver
+from griblet import ComputationGraph
+from griblet import evaluate_tree
 from room_demo import make_room_recipes_graph, RoomLoader
 
 def print_tree(node, indent=0):

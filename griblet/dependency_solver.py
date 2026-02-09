@@ -1,15 +1,32 @@
+"""
+Cost-based dependency solver for ComputationGraph.
+
+Searches a declarative computation graph and selects a minimal-cost
+recipe tree for a requested target field. Assigns execution semantics
+to stored recipes but does not evaluate field values.
+Builds an explicit ComputationTreeNode representing the chosen plan.
+"""
+
 from typing import Tuple, Optional
 from .computation_tree import ComputationTreeNode
 import logging
 
 class UnresolvableFieldError(Exception):
-    """Raised when a computation field cannot be resolved."""
+    """Raised when no recipe chain can resolve a requested field."""
     pass
 
 class FallbackResolutionFailed(Exception):
+    """Raised when all fallback resolution strategies fail."""
     pass
 
 class DependencySolver:
+    """
+    Resolve fields in a ComputationGraph by minimal total cost.
+
+    Recursively explores all recipe dependencies, detects cycles,
+    memoizes intermediate results, and returns a computation tree
+    describing the cheapest valid resolution.
+    """
     def __init__(self, graph):
         self.graph = graph
         self.memo = {}

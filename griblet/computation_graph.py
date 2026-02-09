@@ -1,6 +1,19 @@
+"""
+Declarative dependency graph for field-based computations.
+
+Defines a computation graph that records how fields can be computed from
+other fields via alternative recipes, each with dependencies and cost.
+The graph is descriptive only.
+"""
+
 from collections import defaultdict
 
 class ComputationGraph:
+    """
+    Registry of alternative recipes for computing named fields.
+    Stores, but does not execute, dependency relationships between fields.
+    Each field may have multiple recipes with associated costs and metadata.
+    """
     def __init__(self, other_graph=None):
         self.recipes = defaultdict(list)
         if other_graph is not None:

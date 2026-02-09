@@ -4,8 +4,8 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
-from griblet.computation_graph import ComputationGraph
-from griblet.dependency_solver import DependencySolver
+from griblet import ComputationGraph
+from griblet import DependencySolver
 
 from room_demo import make_room_recipes_graph, RoomLoader
 import plots
@@ -49,3 +49,16 @@ if __name__ == "__main__":
     )
     fig.tight_layout()
     fig.savefig("computation_paths.png", dpi=150)
+
+
+    fig, ax = plt.subplots(figsize=(11, 8))
+    plots.plot_and_or_graph(computation_graph, ax=ax)
+    fig.savefig("and_or.png", dpi=150)
+
+    fig, ax = plt.subplots(figsize=(11, 8))
+    plots.plot_and_or_with_nubs(computation_graph, ax=ax)
+    fig.savefig("and_or_with_nubs.png", dpi=150)
+
+    fig, ax = plt.subplots(figsize=(11, 8))
+    plots.plot_and_or_graph_c(computation_graph, ax=ax)
+    fig.savefig("and_or.png", dpi=150)

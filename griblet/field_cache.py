@@ -1,4 +1,18 @@
+"""
+Field-level cache with cost model for loaders.
+
+Wraps a loader and memoizes loaded field values. Supports loaders that return
+either a single field value or a dict of multiple fields (bulk load), updating
+the cache accordingly. Exposes a simple dynamic cost: cached vs uncached.
+"""
+
 class FieldCache:
+    """
+    Cache wrapper around a loader with a cached/uncached cost model.
+
+    `get()` memoizes loaded values; if the loader returns a dict, all returned
+    fields are cached at once. `cost(field)` reflects current cache state.
+    """
     def __init__(self, loader, uncached_cost=50, cached_cost=0.1):
         self.loader = loader
         self._cache = {}

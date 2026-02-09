@@ -1,8 +1,22 @@
+"""
+Computation tree representation for resolved dependency graphs.
+
+Defines a tree node that records a chosen recipe for a field, its planned
+(static) cost, and optional runtime (actual) cost. Supports cost aggregation,
+re-evaluation against a graph, and human-readable tree printing.
+"""
+
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict
 
 @dataclass
 class ComputationTreeNode:
+    """
+    Node in a resolved computation tree.
+
+    Represents one field resolved via a specific recipe, with references to
+    dependency nodes, planned cost, optional actual cost, and recipe metadata.
+    """
     field: str
     cost: float
     used_primary: bool = False

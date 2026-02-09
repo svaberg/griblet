@@ -1,5 +1,18 @@
+"""
+Execution of resolved computation trees.
+
+Evaluates a ComputationTreeNode tree against a ComputationGraph by invoking
+the selected recipe functions, propagating values bottom-up, and updating
+actual (runtime) costs with optional change logging.
+"""
+
 def evaluate_tree(node, graph):
-    """Evaluate the computation tree node, and update/log actual cost."""
+    """
+    Execute a resolved computation tree node.
+
+    Recursively evaluates dependencies, calls the matching recipe function,
+    updates actual costs on each node, and returns the computed value.
+    """
     if node.used_primary:
         # Find the zero-argument recipe and get cost (dynamic if callable)
         for recipe in graph.recipes[node.field]:

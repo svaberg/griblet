@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from griblet.computation_graph import ComputationGraph
-from griblet.dependency_solver import DependencySolver, UnresolvableFieldError
-from griblet.evaluate_tree import evaluate_tree
+from griblet import ComputationGraph
+from griblet import DependencySolver, UnresolvableFieldError
+from griblet import evaluate_tree
 
 from room_demo import make_room_recipes_graph, RoomLoader
 
