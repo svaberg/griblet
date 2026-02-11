@@ -15,7 +15,7 @@ class ComputationGraph:
     Each field may have multiple recipes with associated costs and metadata.
     """
     def __init__(self, other_graph=None):
-        self.recipes = defaultdict(list)
+        self.recipes = {}
         if other_graph is not None:
             self.merge(other_graph)
 
@@ -28,16 +28,13 @@ class ComputationGraph:
         - cost: fixed cost to compute this field (or a callable that returns the cost)
         - metadata: optional dict with other info
         """
-        if deps is None:
-            deps = []
-
-        recipe = dict(
-            deps=list(deps),
-            func=func,
-            cost=cost,
-            metadata=metadata or {},
-        )
-        self.recipes[field].append(recipe)
+        recipe = {
+            "deps": tuple(deps or ()),
+            "func": func,
+            "cost": cost,
+            "metadata": dict(metadata or {}),
+        }
+        self.recipes.setdefault(field, []).append(recipe)
 
     def merge(self, other):
         """
@@ -45,21 +42,9 @@ class ComputationGraph:
         Returns self for method chaining.
         """
         for field, recipes in other.recipes.items():
-            self.recipes[field].extend([r.copy() for r in recipes])
+            self.recipes.setdefault(field, []).extend(recipes)
         return self
-        
-    # def update_all_costs(self, loader):
-    #     """
-    #     Update costs for all loader fields from the current state of the loader.
-    #     TODO this is not used or even working yet.
-    #     """
-    #     for field, recipe_list in self.recipes.items():
-    #         for recipe in recipe_list:
-    #             # You may want to check if this recipe is a loader recipe (e.g. by metadata or a flag)
-    #             if recipe['metadata'].get('description', '').startswith('Loader'):
-    #                 recipe['cost'] = loader.cost(field)
-
-
+      
     def list_fields(self):
         return set(self.recipes)
 
