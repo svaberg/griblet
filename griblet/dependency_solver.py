@@ -7,9 +7,10 @@ to stored recipes but does not evaluate field values.
 Builds an explicit ComputationTreeNode representing the chosen plan.
 """
 
-from typing import Tuple, Optional
-from .computation_tree import ComputationTreeNode
 import logging
+from typing import Optional, Set, Tuple
+
+from .computation_tree import ComputationTreeNode
 
 class UnresolvableFieldError(Exception):
     """Raised when no recipe chain can resolve a requested field."""
@@ -31,10 +32,13 @@ class DependencySolver:
         self.graph = graph
         self.memo = {}
 
-    def resolve_field(self, target: str, path=None) -> Tuple[float, Optional[ComputationTreeNode]]:
+    def _resolve_field(
+        self,
+        target: str,
+        path: Optional[Set[str]] = None,
+    ) -> Tuple[float, Optional[ComputationTreeNode]]:
         """
-        Find the minimal-cost computation tree for `target`.
-        Returns (total_cost, ComputationTreeNode or None if impossible).
+        Internal recursive resolver used by `resolve_field()`.
         """
         logger = logging.getLogger("DependencySolver")
         if path is None:
@@ -64,7 +68,7 @@ class DependencySolver:
             total = cost_val
             for dep in deps:
                 try:
-                    dep_cost, dep_tree = self.resolve_field(dep, path)
+                    dep_cost, dep_tree = self._resolve_field(dep, path)
                     if dep_cost == float("inf") or dep_tree is None:
                         logger.debug(f"  Dependency '{dep}' of '{target}' failed (unresolvable)")
                         fail = True
@@ -104,3 +108,15 @@ class DependencySolver:
             self.memo[memo_key] = (best_cost, best_tree)
             logger.debug(f"Field '{target}' resolved, best_cost={best_cost}")
             return (best_cost, best_tree)
+
+    def resolve_field(self, target: str) -> Tuple[float, ComputationTreeNode]:
+        """
+        Find the minimal-cost computation tree for `target`.
+
+        Returns `(total_cost, tree)` on success and raises
+        `UnresolvableFieldError` if the target cannot be resolved.
+        """
+        cost, tree = self._resolve_field(target)
+        if tree is None:
+            raise UnresolvableFieldError(f"Cannot resolve field '{target}'.")
+        return cost, tree
