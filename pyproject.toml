@@ -18,10 +18,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "pytest",
     "numpy",
+    "scipy",
     "astropy",
     "networkx",
-    "matplotlib"
+    "matplotlib",
 ]
 
 [project.urls]
