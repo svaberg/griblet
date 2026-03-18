@@ -23,7 +23,9 @@ pip install -e '.[dev]'
 ```
 ## Example
 
-See [`examples/demo_griblet.py`](examples/demo_griblet.py) for a demonstration.
+See [`examples/demo_dependency_solver.py`](examples/demo_dependency_solver.py)
+for the basic solve-and-evaluate flow, and
+[`examples/demo_networkx.py`](examples/demo_networkx.py) for plotting and graph
+visualization.
 
 ---
-
