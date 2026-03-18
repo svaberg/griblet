@@ -16,7 +16,7 @@ def evaluate_tree(node, graph):
     if node.used_primary:
         # Find the zero-argument recipe and get cost (dynamic if callable)
         for recipe in graph.recipes[node.field]:
-            if recipe['deps'] == []:
+            if not recipe['deps']:
                 cost_val = recipe['cost']() if callable(recipe['cost']) else recipe['cost']
                 break
         else:
@@ -28,8 +28,9 @@ def evaluate_tree(node, graph):
         return recipe['func']()
     # Otherwise, evaluate dependencies and recipe
     values = [evaluate_tree(dep, graph) for dep in node.deps]
+    dep_fields = tuple(dep.field for dep in node.deps)
     for recipe in graph.recipes[node.field]:
-        if [dep.field for dep in node.deps] == recipe['deps']:
+        if dep_fields == recipe['deps']:
             cost_val = recipe['cost']() if callable(recipe['cost']) else recipe['cost']
             break
     else:
