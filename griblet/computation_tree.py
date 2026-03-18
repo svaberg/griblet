@@ -35,8 +35,9 @@ class ComputationTreeNode:
         Returns total actual cost for this subtree.
         """
         # Find matching recipe for this node
+        dep_fields = tuple(dep.field for dep in self.deps)
         for recipe in graph.recipes[self.field]:
-            if [dep.field for dep in self.deps] == recipe['deps']:
+            if dep_fields == recipe['deps']:
                 cost_val = recipe['cost']() if callable(recipe['cost']) else recipe['cost']
                 break
         else:

@@ -274,8 +274,6 @@ def plot_computation_paths(
     # Draw each tree's edges in its own color/curve
     for i, ((nodes, edges), color, label) in enumerate(zip(trees_nodes_edges, colors, labels)):
         rad = rad_vals[i % len(rad_vals)]
-        # import pdb; pdb.set_trace()
-        print(color, label)
         nx.draw_networkx_edges(
             DG, pos, edgelist=edges,
             edge_color=color, width=3, ax=ax,
@@ -576,7 +574,6 @@ def plot_and_or_graph_c(comp_graph, ax, title="Computation graph"):
     try:
         from networkx.drawing.nx_agraph import graphviz_layout
         posF = graphviz_layout(field_sub, prog="dot")
-        # import pdb; pdb.set_trace()
     except ImportError:
         posF = nx.kamada_kawai_layout(field_sub)
 

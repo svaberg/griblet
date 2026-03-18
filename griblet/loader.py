@@ -6,7 +6,7 @@ zero-dependency computation recipes with associated access costs.
 Supports simple per-field loading and block-style bulk loading with caching.
 """
 
-from typing import Any, Dict, Union, List
+from typing import Any, Dict, List, Optional, Union
 from griblet.computation_graph import ComputationGraph  # avoid circular import
 
 
@@ -46,25 +46,23 @@ class BaseLoader:
         else:
             raise ValueError(f"Field '{field}' not found.")
 
-    def as_graph(self, cost: float = 0.1):
+    def as_graph(self, cost: Optional[Union[float, Any]] = None):
         """
         Returns a ComputationGraph with a loader recipe for each field.
         """
         cg = ComputationGraph()
         for field in self.fields():
+            recipe_cost = (lambda field=field: self.cost(field)) if cost is None else cost
             # Bind field name into default func/cost lambdas
             cg.add_recipe(
                 field=field,
                 func=lambda field=field: self.load(field),
                 deps=[],
-                cost=lambda field=field: self.cost(field),
+                cost=recipe_cost,
                 metadata={'description': 'Loader'}
             )
         return cg
 
-
-from typing import Any, Dict, List
-from griblet.computation_graph import ComputationGraph
 
 class BlockLoader:
     """
@@ -104,7 +102,7 @@ class BlockLoader:
         for field in self.fields():
             # bind field name for lambda (avoid late-binding bug)
             cg.add_recipe(
-                output=field,
+                field=field,
                 func=lambda field=field: self.load(field),
                 deps=[],
                 cost=lambda field=field: self.cost(field),
