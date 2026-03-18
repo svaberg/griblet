@@ -1,8 +1,11 @@
 import numpy as np
+import pytest
 import scipy.constants
 
 from griblet import ComputationGraph
 from griblet import BaseLoader
+from griblet import DependencySolver
+from griblet import evaluate_tree
 
 _fallback_gamma = 5/3
 
@@ -134,3 +137,16 @@ def make_wind_recipes_graph():
     cg.add_recipe("T ideal (K)", T_ideal, deps=["P (Pa)", "Ne (1/m^3)"], cost=0.7)
 
     return cg
+
+
+def test_batsrus_example_flow_resolves_and_evaluates():
+    graph = ComputationGraph(WindLoader().as_graph())
+    graph.merge(make_wind_recipes_graph())
+
+    solver = DependencySolver(graph)
+    cost, tree = solver.resolve_field("T ideal (K)")
+    value = evaluate_tree(tree, graph)
+
+    assert cost > 0
+    assert value.shape == (10,)
+    assert np.all(np.isfinite(value))

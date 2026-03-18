@@ -1,6 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import logging
+import pytest
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
@@ -87,6 +88,17 @@ def plot_networkx_graph(loader, recipes_graph, filename):
     print("\nFields sorted alphabetically:")
     for field in sorted(costs):
         print(f"{field}: {costs[field]:.2f}")
+
+
+def test_demo_networkx_generates_expected_artifacts(tmp_path):
+    output_prefix = tmp_path / "demo_networkx.png"
+    from room_demo import make_room_recipes_graph, RoomLoader
+
+    plot_networkx_graph(RoomLoader(), make_room_recipes_graph(), str(output_prefix))
+
+    assert (tmp_path / "demo_networkx.png_loader.png").exists()
+    assert (tmp_path / "demo_networkx.png_with_recipes.png").exists()
+    assert (tmp_path / "demo_networkx.png_computation_paths.png").exists()
 
 
 

@@ -30,3 +30,7 @@ dev = [
 Homepage = "https://github.com/svaberg/griblet"
 Repository = "https://github.com/svaberg/griblet"
 Issues = "https://github.com/svaberg/griblet/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "examples"]
+python_files = ["test_*.py", "demo_*.py", "batsrus_demo.py"]
