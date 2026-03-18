@@ -3,11 +3,11 @@ import pytest
 from griblet import (
     BaseLoader,
     ComputationGraph,
+    ComputationTreeNode,
     DependencySolver,
     UnresolvableFieldError,
     evaluate_tree,
 )
-from griblet.computation_tree import ComputationTreeNode
 from griblet.loader import BlockLoader
 
 
@@ -23,6 +23,7 @@ class DemoLoader(BaseLoader):
 def test_top_level_public_api_exports_expected_symbols():
     assert BaseLoader is not None
     assert ComputationGraph is not None
+    assert ComputationTreeNode is not None
     assert DependencySolver is not None
     assert UnresolvableFieldError is not None
     assert evaluate_tree is not None
