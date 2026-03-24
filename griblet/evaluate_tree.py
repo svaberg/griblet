@@ -6,6 +6,12 @@ the selected recipe functions, propagating values bottom-up, and updating
 actual (runtime) costs with optional change logging.
 """
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+
 def evaluate_tree(node, graph):
     """
     Execute a resolved computation tree node.
@@ -24,7 +30,7 @@ def evaluate_tree(node, graph):
         prev = node.last_actual_cost
         node.last_actual_cost = cost_val
         if prev is not None and prev != cost_val:
-            print(f"[COST CHANGE] Node '{node.field}': {prev} → {cost_val}")
+            logger.info("Cost change for %s: %s -> %s", node.field, prev, cost_val)
         return recipe['func']()
     # Otherwise, evaluate dependencies and recipe
     values = [evaluate_tree(dep, graph) for dep in node.deps]
@@ -40,5 +46,5 @@ def evaluate_tree(node, graph):
     prev = node.last_actual_cost
     node.last_actual_cost = total_cost
     if prev is not None and prev != total_cost:
-        print(f"[COST CHANGE] Node '{node.field}': {prev} → {total_cost}")
+        logger.info("Cost change for %s: %s -> %s", node.field, prev, total_cost)
     return recipe['func'](*values)

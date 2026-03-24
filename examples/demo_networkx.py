@@ -71,11 +71,8 @@ def plot_networkx_graph(loader, recipes_graph, filename):
     
     fields = computation_graph.list_fields()
     print(f"Fields in graph: {fields}")
-    for field in fields:
-        computation_graph.describe_field(field)
 
-
-    costs, trees = compute_costs_and_trees(solver, fields)    
+    costs, trees = compute_costs_and_trees(solver, fields)
     for field, cost in costs.items():
         print(f"{field}: {cost:.2f}")
 

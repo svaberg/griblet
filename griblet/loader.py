@@ -6,8 +6,12 @@ zero-dependency computation recipes with associated access costs.
 Supports simple per-field loading and block-style bulk loading with caching.
 """
 
+import logging
 from typing import Any, Dict, List, Optional, Union
 from griblet.computation_graph import ComputationGraph  # avoid circular import
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseLoader:
@@ -86,7 +90,7 @@ class BlockLoader:
 
     def load(self, field: str) -> Any:
         if not self._loaded:
-            print(f"BlockLoader: Loading all fields in a single operation.")
+            logger.info("BlockLoader loading all fields in a single operation")
             self._cache = dict(self.file_handle)
             self._loaded = True
         return self._cache[field]

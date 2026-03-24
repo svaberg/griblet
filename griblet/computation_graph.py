@@ -6,8 +6,6 @@ other fields via alternative recipes, each with dependencies and cost.
 The graph is descriptive only.
 """
 
-from collections import defaultdict
-
 class ComputationGraph:
     """
     Registry of alternative recipes for computing named fields.
@@ -44,17 +42,12 @@ class ComputationGraph:
         for field, recipes in other.recipes.items():
             self.recipes.setdefault(field, []).extend(recipes)
         return self
-      
+
     def list_fields(self):
         return set(self.recipes)
 
     def list_recipes(self, field):
         return [r['deps'] for r in self.recipes.get(field, [])]
-
-    def describe_field(self, field):
-        print(f"{field}:")
-        for i, r in enumerate(self.recipes.get(field, []), 1):
-            print(f"  Recipe {i}: deps={r['deps']}, cost={r['cost']}, meta={r['metadata']}")
 
     def __str__(self):
         lines = []
