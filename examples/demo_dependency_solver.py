@@ -1,9 +1,7 @@
 import astropy.units as u
 import pytest
 
-from griblet import DependencySolver
 from griblet import ComputationGraph
-from griblet import evaluate_tree
 from room_demo import make_room_recipes_graph, RoomLoader
 
 def print_tree(node, indent=0):
@@ -29,15 +27,14 @@ def build_graph():
 
 def solve_volume():
     computation_graph = build_graph()
-    solver = DependencySolver(computation_graph)
-    cost, tree = solver.resolve_field('volume')
+    cost, tree = computation_graph.plan('volume')
     return computation_graph, cost, tree
 
 
 def test_demo_dependency_solver_flow():
     computation_graph, cost, tree = solve_volume()
-    vol_value = evaluate_tree(tree, computation_graph)
-    vol_value2 = evaluate_tree(tree, computation_graph)
+    vol_value = computation_graph.compute('volume')
+    vol_value2 = computation_graph.compute('volume')
 
     assert cost == pytest.approx(2.2)
     assert vol_value.to_value(u.m**3) == pytest.approx([60.0])
@@ -52,11 +49,11 @@ if __name__ == "__main__":
 
     # 3. Evaluate and show the computation (no cache, so both calls should behave the same)
     print("\nFirst evaluation:")
-    vol_value = evaluate_tree(tree, computation_graph)
+    vol_value = computation_graph.compute('volume')
     print("Volume:", vol_value)
 
     print("\nSecond evaluation (should be identical):")
-    vol_value2 = evaluate_tree(tree, computation_graph)
+    vol_value2 = computation_graph.compute('volume')
     print("Volume:", vol_value2)
 
     print("\nVolume in liters:")

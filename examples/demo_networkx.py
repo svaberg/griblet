@@ -6,7 +6,6 @@ logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 from griblet import ComputationGraph
-from griblet import DependencySolver
 from griblet import UnresolvableFieldError
 
 import plots
@@ -14,12 +13,12 @@ import plots
 _figsize=(12, 9)
 
 
-def compute_costs_and_trees(solver, fields):
+def compute_costs_and_trees(graph, fields):
     costs = {}
     trees = {}
     for field in fields:
         try:
-            cost, tree = solver.resolve_field(field)
+            cost, tree = graph.plan(field)
             costs[field] = cost
             trees[field] = tree
             print(field, cost)
@@ -47,13 +46,11 @@ def plot_networkx_graph(loader, recipes_graph, filename):
     
     # # Use the solver 
     try:
-        solver = DependencySolver(computation_graph)
-        cost1, tree1 = solver.resolve_field('volume')
+        cost1, tree1 = computation_graph.plan('volume')
 
         # (Optionally) remove 'area' as a recipe or node, then resolve again
         computation_graph.recipes.pop('area', None)
-        solver2 = DependencySolver(computation_graph)
-        cost2, tree2 = solver2.resolve_field('volume')
+        cost2, tree2 = computation_graph.plan('volume')
 
         fig, ax = plt.subplots(figsize=_figsize)
         plots.plot_computation_paths(
@@ -72,7 +69,7 @@ def plot_networkx_graph(loader, recipes_graph, filename):
     fields = computation_graph.list_fields()
     print(f"Fields in graph: {fields}")
 
-    costs, trees = compute_costs_and_trees(solver, fields)
+    costs, trees = compute_costs_and_trees(computation_graph, fields)    
     for field, cost in costs.items():
         print(f"{field}: {cost:.2f}")
 

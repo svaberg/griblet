@@ -43,6 +43,23 @@ class ComputationGraph:
             self.recipes.setdefault(field, []).extend(recipes)
         return self
 
+    def plan(self, target):
+        """
+        Return the cheapest computation path for `target`.
+        """
+        from .dependency_solver import DependencySolver
+
+        return DependencySolver(self).resolve_field(target)
+
+    def compute(self, target):
+        """
+        Compute `target` by planning and evaluating the cheapest path.
+        """
+        from .evaluate_tree import evaluate_tree
+
+        _, tree = self.plan(target)
+        return evaluate_tree(tree, self)
+      
     def list_fields(self):
         return set(self.recipes)
 
