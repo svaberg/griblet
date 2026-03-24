@@ -5,60 +5,56 @@ import astropy.units as u
 import pytest
 logging.basicConfig(level=logging.INFO)
 
-from griblet import ComputationGraph
-from griblet import UnresolvableFieldError
+from griblet import Graph, NoPathError
+from griblet.pathfinder import Pathfinder
 
-from room_demo import make_room_recipes_graph, RoomLoader
+from room_demo import make_room_graph, RoomLoader
 
 
 def build_graph():
     loader = RoomLoader()
     loader_graph = loader.as_graph()
-    computation_graph = ComputationGraph(loader_graph)
-    room_recipies_graph = make_room_recipes_graph()
-    computation_graph.merge(room_recipies_graph)
-    return computation_graph
+    graph = Graph(loader_graph)
+    graph.merge(make_room_graph())
+    return graph
 
 
 def test_demo_rerouting_flow():
-    computation_graph = build_graph()
+    graph = build_graph()
 
-    cost1, _tree1 = computation_graph.plan('volume')
-    val1 = computation_graph.compute('volume')
+    cost1, _path1 = Pathfinder(graph).find_path("volume")
+    val1 = graph.compute("volume")
 
-    computation_graph.recipes.pop('area', None)
-    cost2, _tree2 = computation_graph.plan('volume')
-    val2 = computation_graph.compute('volume')
+    graph.ways.pop("area", None)
+    cost2, _path2 = Pathfinder(graph).find_path("volume")
+    val2 = graph.compute("volume")
 
     assert val1.to_value(u.m**3) == pytest.approx([60.0])
     assert val2.to_value(u.m**3) == pytest.approx([60.0])
     assert cost2 > cost1
 
-    computation_graph.recipes.pop('length', None)
-    with pytest.raises(UnresolvableFieldError):
-        computation_graph.plan('volume')
+    graph.ways.pop("length", None)
+    with pytest.raises(NoPathError):
+        Pathfinder(graph).find_path("volume")
 
 
 if __name__ == "__main__":
-    computation_graph = build_graph()
+    graph = build_graph()
     
-    # Initial graph with all recipes
-    cost1, tree1 = computation_graph.plan('volume')
-    val1 = computation_graph.compute('volume')
+    cost1, path1 = Pathfinder(graph).find_path("volume")
+    val1 = graph.compute("volume")
     print(f"{'volume'}: {val1} (cost: {cost1:.2f})")
 
-    # Remove 'area' recipe and resolve again
-    computation_graph.recipes.pop('area', None)
-    cost2, tree2 = computation_graph.plan('volume')
-    val2 = computation_graph.compute('volume')
+    graph.ways.pop("area", None)
+    cost2, path2 = Pathfinder(graph).find_path("volume")
+    val2 = graph.compute("volume")
     print(f"{'volume'}: {val2} (cost: {cost2:.2f})")
 
-    # Remove 'length' recipe and resolve again
-    computation_graph.recipes.pop('length', None)
+    graph.ways.pop("length", None)
     try:
-        cost3, tree3 = computation_graph.plan('volume')
-        val3 = computation_graph.compute('volume')
+        cost3, path3 = Pathfinder(graph).find_path("volume")
+        val3 = graph.compute("volume")
         print(f"{'volume'}: {val3} (cost: {cost3:.2f})")
-        assert False, "Expected UnresolvableFieldError but got a valid result"
-    except UnresolvableFieldError as e:
+        assert False, "Expected NoPathError but got a valid result"
+    except NoPathError as e:
         print(f"Got expected error: {e}")

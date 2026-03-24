@@ -5,85 +5,50 @@
 </tr>
 </table>
 
+The griblet knows the best path to data inside a graph.
+- It thrives where there are multiple, looping paths.
+- It can take cache and disk state into account.
+- It works well for scientific post-processing.
 
-**Carve computation trees from a burl of dependencies.**
+## Installation
+Install `griblet` in the usual way:
 
-Griblet is a dynamic, cost-aware pathfinding library for planning computation trees through a flexible graph of possible dependencies and recipes.
-
-- Supports alternative computation paths for each result
-- Dynamic costs, including cache- and disk-aware lazy evaluation
-- Clean separation of recipes, cache, loader, and evaluation logic
-- Suitable for scientific post-processing, engineering workflows, and flexible data processing pipelines
-
-## Developer install
 ```bash
-git clone https://github.com/svaberg/griblet.git
-cd griblet
-pip install -e '.[dev]'
+pip install griblet
 ```
 
-## What it does
-
-Griblet finds the cheapest valid path to a requested result through a graph of alternative computation recipes.
-
-You describe the search space by defining which fields can be loaded directly and which fields can be derived from other fields. Griblet then selects a computation path through that graph and evaluates it.
+The `griblet` package has no runtime dependencies.
 
 ## Example
 
-```python
-from griblet import ComputationGraph
-
-
-graph = ComputationGraph()
-
-graph.add_recipe("length", lambda: 5.0, deps=[], cost=0.1)
-graph.add_recipe("width", lambda: 4.0, deps=[], cost=0.1)
-graph.add_recipe("height", lambda: 3.0, deps=[], cost=0.1)
-
-# Area can be derived from the box base.
-graph.add_recipe("area", lambda length, width: length * width, deps=["length", "width"], cost=2.0)
-
-# Volume can be computed either from area and height...
-graph.add_recipe("volume", lambda area, height: area * height, deps=["area", "height"], cost=2.0)
-
-# ...or directly from the three box dimensions.
-graph.add_recipe("volume", lambda length, width, height: length * width * height, deps=["length", "width", "height"], cost=3.0)
-
-value = graph.compute("volume")
-
-print(value)
-```
-
-This is where griblet earns its keep: `volume` has more than one valid computation path. The graph chooses the cheapest complete path through the recipe space before evaluation.
-
-## Path inspection
-
-If you want to inspect the selected path:
+To use `griblet`, build a data graph. Each call to `graph.add(...)` adds one path by which data can be reached. The first three calls add `length`, `width`, and `height` directly. The later calls add two different paths to `volume`: one through `area`, and one directly from `length`, `width`, and `height`. 
 
 ```python
-cost, tree = graph.plan("volume")
-print(cost)
-print(tree)
+from griblet import Graph
+
+graph = Graph()
+
+graph.add("length", lambda: 5.0)
+graph.add("width", lambda: 4.0)
+graph.add("height", lambda: 3.0)
+
+graph.add("area", lambda length, width: length * width,
+          needs=["length", "width"], cost=2.0)
+
+graph.add("volume", lambda area, height: area * height,
+          needs=["area", "height"], cost=2.0)
+graph.add("volume", lambda length, width, height: length * width * height,
+          needs=["length", "width", "height"], cost=3.0)
+
+print(graph.compute("volume"))
 ```
 
-`graph.plan(...)` returns a `(cost, ComputationTreeNode)` pair.
+When `graph.compute("volume")` is called, the griblet follows the better path and computes it.
 
-## Errors
+If the graph has no path to the requested data, `griblet` raises `NoPathError`.
 
-If a target cannot be resolved, griblet raises `UnresolvableFieldError`.
+## Further Examples
 
-## Advanced API
-
-The graph-centered API should cover the common case:
-
-```python
-cost, tree = graph.plan("volume")
-print(cost)
-print(tree)
-```
-
-## Examples
-
-See [`examples/demo_dependency_solver.py`](examples/demo_dependency_solver.py) for the basic solve-and-evaluate flow, [`examples/demo_rerouting.py`](examples/demo_rerouting.py) for path changes when recipes are removed, and [`examples/demo_networkx.py`](examples/demo_networkx.py) for plotting and graph visualization.
+The files in [`examples/`](examples/) showcase larger graphs and more realistic use.
 
 ---

@@ -1,14 +1,15 @@
 """
-Loader abstractions for injecting external data into a ComputationGraph.
+Loader abstractions for injecting external data into a Graph.
 
 Defines loader classes that expose externally stored field values as
-zero-dependency computation recipes with associated access costs.
+zero-need graph entries with associated access costs.
 Supports simple per-field loading and block-style bulk loading with caching.
 """
 
 import logging
 from typing import Any, Dict, List, Optional, Union
-from griblet.computation_graph import ComputationGraph  # avoid circular import
+
+from .graph import Graph
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ class BaseLoader:
     """
     Base class for field loaders.
 
-    Maps external data sources to zero-dependency graph recipes.
+    Maps external data sources to zero-need graph entries.
     Subclasses provide loading logic, available fields, and access cost.
     """
     def __init__(self):
@@ -52,20 +53,18 @@ class BaseLoader:
 
     def as_graph(self, cost: Optional[Union[float, Any]] = None):
         """
-        Returns a ComputationGraph with a loader recipe for each field.
+        Return a Graph with one source path for each field.
         """
-        cg = ComputationGraph()
-        for field in self.fields():
-            recipe_cost = (lambda field=field: self.cost(field)) if cost is None else cost
-            # Bind field name into default func/cost lambdas
-            cg.add_recipe(
-                field=field,
-                func=lambda field=field: self.load(field),
-                deps=[],
-                cost=recipe_cost,
-                metadata={'description': 'Loader'}
+        graph = Graph()
+        for name in self.fields():
+            way_cost = (lambda name=name: self.cost(name)) if cost is None else cost
+            graph.add(
+                name,
+                lambda name=name: self.load(name),
+                cost=way_cost,
+                metadata={"description": "Loader"},
             )
-        return cg
+        return graph
 
 
 class BlockLoader:
@@ -74,7 +73,7 @@ class BlockLoader:
 
     Simulates bulk I/O by loading all fields on first access, then serving
     subsequent accesses from memory at reduced cost. Exposes each field
-    as a zero-dependency recipe.
+    as a zero-need graph entry.
     """
     def __init__(self, file_handle: Dict[str, Any], load_cost=1.0, cached_cost=0.05):
         """
@@ -101,15 +100,13 @@ class BlockLoader:
     def fields(self) -> List[str]:
         return list(self.file_handle.keys())
 
-    def as_graph(self) -> ComputationGraph:
-        cg = ComputationGraph()
-        for field in self.fields():
-            # bind field name for lambda (avoid late-binding bug)
-            cg.add_recipe(
-                field=field,
-                func=lambda field=field: self.load(field),
-                deps=[],
-                cost=lambda field=field: self.cost(field),
-                metadata={'description': 'BlockLoader'}
+    def as_graph(self) -> Graph:
+        graph = Graph()
+        for name in self.fields():
+            graph.add(
+                name,
+                lambda name=name: self.load(name),
+                cost=lambda name=name: self.cost(name),
+                metadata={"description": "BlockLoader"},
             )
-        return cg
+        return graph

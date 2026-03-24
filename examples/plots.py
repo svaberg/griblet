@@ -10,37 +10,36 @@ def flattened_dependency_graph(computation_graph):
     Construct a flattened field-level dependency graph.
 
     Returns a directed graph with one node per field and an edge
-    dep → field for every dependency appearing in any recipe.
-    Recipe structure and cost information are discarded.
+    need → field for every need appearing in any way.
+    Way structure and cost information are discarded.
     """
     dependency_graph = nx.DiGraph()
     # Add all fields as nodes first
-    for recipe in computation_graph.recipes:
-        dependency_graph.add_node(recipe)
-    # Add edges for all recipes with dependencies
-    for output, recipe_list in computation_graph.recipes.items():
-        for recipe in recipe_list:
-            for dep in recipe['deps']:
-                dependency_graph.add_edge(dep, output)
+    for name in computation_graph.ways:
+        dependency_graph.add_node(name)
+    for output, way_list in computation_graph.ways.items():
+        for way in way_list:
+            for need in way["needs"]:
+                dependency_graph.add_edge(need, output)
     return dependency_graph
 
 
-def collect_subtree_nodes_edges(tree):
+def collect_subtree_nodes_edges(path):
     """
-    Collect nodes and edges from a resolved computation tree.
+    Collect nodes and edges from a chosen path.
 
-    Traverses a ComputationTreeNode and returns:
-    - nodes: set of field names in the tree
-    - edges: set of (dep_field, field) edges used by the plan
+    Traverses a PathNode and returns:
+    - nodes: set of data names in the path
+    - edges: set of (need, name) edges used by the path
     """
     nodes = set()
     edges = set()
     def visit(node):
-        nodes.add(node.field)
-        for dep in getattr(node, "deps", []):
-            edges.add((dep.field, node.field))
-            visit(dep)
-    visit(tree)
+        nodes.add(node.name)
+        for need in getattr(node, "needs", []):
+            edges.add((need.name, node.name))
+            visit(need)
+    visit(path)
     return nodes, edges
 
 
@@ -54,8 +53,8 @@ def plot_flattened_computation_graph(
     Plot a flattened dependency graph of the computation graph.
 
     Displays all fields as nodes and all possible dependency edges,
-    ignoring recipe grouping. Optionally annotates nodes with
-    per-recipe cost and selected metadata.
+    ignoring way grouping. Optionally annotates nodes with
+    per-way cost and selected metadata.
     """
     digraph = flattened_dependency_graph(computation_graph)
 
@@ -63,21 +62,18 @@ def plot_flattened_computation_graph(
     if show_node_metadata:
         node_labels = {}
         for n in digraph.nodes:
-            recipes = computation_graph.recipes.get(n, [])
+            ways = computation_graph.ways.get(n, [])
             lines = [str(n)]
-            for i, r in enumerate(recipes):
-                # Format cost (show 'callable' if not number)
-                cost = r['cost']
+            for i, way in enumerate(ways):
+                cost = way["cost"]
                 cost_str = cost if isinstance(cost, (int, float)) else "callable"
-                # Get metadata fields
-                desc = r['metadata'].get('description', '')
-                unit = r['metadata'].get('unit', '')
+                desc = way["metadata"].get("description", "")
+                unit = way["metadata"].get("unit", "")
                 extra = []
                 if desc: extra.append(desc)
                 if unit: extra.append(f"[{unit}]")
                 extra_str = " ".join(extra)
-                # Multiple recipes: number them
-                if len(recipes) > 1:
+                if len(ways) > 1:
                     lines.append(f"({i+1}) cost={cost_str} {extra_str}")
                 else:
                     lines.append(f"cost={cost_str} {extra_str}")
@@ -115,7 +111,7 @@ def plot_flattened_computation_graph(
 
 def plot_computation_paths(
     computation_graph,
-    trees,
+    paths,
     ax,
     *,
     labels=None,
@@ -125,11 +121,11 @@ def plot_computation_paths(
     font_size=11
 ):
     """
-    Plot multiple computation trees as colored, curved arrows on top of the 
+    Plot multiple chosen paths as colored, curved arrows on top of the
     flattened dependency graph.
 
-    computation_graph: ComputationGraph object (with .recipes)
-    trees: list of computation tree roots (e.g., from DependencySolver.resolve_field)
+    computation_graph: Graph object (with .ways)
+    paths: list of chosen path roots
     ax: matplotlib axis to draw on
     labels: list of labels for legend (optional)
     colors: list of colors (optional)
@@ -137,22 +133,22 @@ def plot_computation_paths(
     # Build flattened dependency graph
     digraph = flattened_dependency_graph(computation_graph)
     # DG = nx.DiGraph()
-    # for node, recipes in computation_graph.recipes.items():
-    #     for recipe in recipes:
-    #         for dep in recipe['deps']:
+    # for node, ways in computation_graph.ways.items():
+    #     for way in ways:
+    #         for need in way["needs"]:
     #             DG.add_edge(dep, node)
     # Compute layout
     pos = nx.spring_layout(digraph, seed=42)
 
-    # Collect union of all nodes/edges in any tree
-    all_tree_nodes = set()
-    all_tree_edges = set()
+    # Collect union of all nodes/edges in any path
+    all_path_nodes = set()
+    all_path_edges = set()
 
-    # Process all trees: get per-tree nodes/edges
-    trees_nodes_edges = [collect_subtree_nodes_edges(t) for t in trees]
-    for nodes, edges in trees_nodes_edges:
-        all_tree_nodes.update(nodes)
-        all_tree_edges.update(edges)
+    # Process all paths: get per-path nodes/edges
+    path_nodes_edges = [collect_subtree_nodes_edges(path) for path in paths]
+    for nodes, edges in path_nodes_edges:
+        all_path_nodes.update(nodes)
+        all_path_edges.update(edges)
 
     # Draw all nodes in lightgray, to show the union graph background
     # Draw all possible edges in lightgray (flattened)
@@ -164,15 +160,15 @@ def plot_computation_paths(
 
     # Prepare colors, labels
     if colors is None:
-        colors = [f"C{i}" for i in range(len(trees))]
+        colors = [f"C{i}" for i in range(len(paths))]
     if labels is None:
-        labels = [f"Path {i+1}" for i in range(len(trees))]
+        labels = [f"Path {i+1}" for i in range(len(paths))]
 
     rad_vals = [-0.1, 0.1, 0.3, -0.3, 0.2, -0.2]
     legend_elements = [Line2D([0], [0], marker='o', color='w', label='All possible dependencies',
                               markerfacecolor='lightgray', markersize=12)]
-    # Draw each tree's edges in its own color/curve
-    for i, ((nodes, edges), color, label) in enumerate(zip(trees_nodes_edges, colors, labels)):
+    # Draw each path's edges in its own color/curve
+    for i, ((nodes, edges), color, label) in enumerate(zip(path_nodes_edges, colors, labels)):
         rad = rad_vals[i % len(rad_vals)]
         nx.draw_networkx_edges(
             digraph, pos, edgelist=edges,
@@ -182,8 +178,8 @@ def plot_computation_paths(
         )
         legend_elements.append(Line2D([0], [0], color=color, lw=3, label=label))
 
-    # Highlight tree nodes (optional: only those in any tree) with white faces, colored border
-    nx.draw_networkx_nodes(digraph, pos, nodelist=list(all_tree_nodes), node_color="white",
+    # Highlight path nodes (optional: only those in any path) with white faces, colored border
+    nx.draw_networkx_nodes(digraph, pos, nodelist=list(all_path_nodes), node_color="white",
                            node_size=node_size, edgecolors="lightgray", linewidths=3, ax=ax)
 
     ax.legend(handles=legend_elements, loc="upper left")
@@ -199,33 +195,33 @@ def and_or_graph(computation_graph):
     Build explicit AND–OR graph.
 
     OR nodes  : ("F", field)
-    AND nodes : ("R", out_field, recipe_index)
+    AND nodes : ("W", out_field, way_index)
 
     Edges:
-      ("F", out) -> ("R", out, i)     alternative recipe for out
-      ("R", out, i) -> ("F", dep)     required dependency
+      ("F", out) -> ("W", out, i)     alternative way for out
+      ("W", out, i) -> ("F", dep)     required need
     """
     andor_graph = nx.DiGraph()
 
-    for out, recipes in computation_graph.recipes.items():
+    for out, ways in computation_graph.ways.items():
         f_out = ("F", out)
         andor_graph.add_node(f_out, kind="field", field=out)
 
-        for i, r in enumerate(recipes):
-            r_node = ("R", out, i)
+        for i, way in enumerate(ways):
+            r_node = ("W", out, i)
             andor_graph.add_node(
                 r_node,
-                kind="recipe",
+                kind="way",
                 out=out,
                 idx=i,
-                metadata=r.get("metadata", {}),
+                metadata=way.get("metadata", {}),
             )
             andor_graph.add_edge(f_out, r_node)
 
-            for dep in r["deps"]:
-                f_dep = ("F", dep)
-                andor_graph.add_node(f_dep, kind="field", field=dep)
-                andor_graph.add_edge(r_node, f_dep)
+            for need in way["needs"]:
+                f_need = ("F", need)
+                andor_graph.add_node(f_need, kind="field", field=need)
+                andor_graph.add_edge(r_node, f_need)
 
     return andor_graph
 
@@ -233,17 +229,17 @@ def and_or_graph(computation_graph):
 def field_ordinal_levels(comp_graph, direction="out_to_dep"):
     # 1) field projection
     H = nx.DiGraph()
-    for out, recipes in comp_graph.recipes.items():
+    for out, ways in comp_graph.ways.items():
         H.add_node(out)
-        for r in recipes:
-            if not r["deps"]:
+        for way in ways:
+            if not way["needs"]:
                 continue
-            for dep in r["deps"]:
-                H.add_node(dep)
+            for need in way["needs"]:
+                H.add_node(need)
                 if direction == "out_to_dep":
-                    H.add_edge(out, dep)
+                    H.add_edge(out, need)
                 else:
-                    H.add_edge(dep, out)
+                    H.add_edge(need, out)
 
     # 2) collapse cycles
     sccs = list(nx.strongly_connected_components(H))
@@ -272,51 +268,51 @@ def field_ordinal_levels(comp_graph, direction="out_to_dep"):
 
 def plot_and_or_graph(comp_graph, ax, title="Computation graph"):
     """
-    Full AND–OR structure with recipes as small round nodes near their output field.
+    Full AND–OR structure with ways as small round nodes near their output field.
       - field nodes: larger circles
-      - recipe nodes: smaller circles, colored per recipe
-      - recipe color applies to the recipe node and its outgoing edges (deps)
+      - way nodes: smaller circles, colored per way
+      - way color applies to the way node and its outgoing edges (needs)
     """
 
     # --- build explicit AND–OR graph ---
     andor_graph = nx.DiGraph()
     field_nodes = set()
-    recipe_nodes = []
+    way_nodes = []
 
-    for out, recipes in comp_graph.recipes.items():
+    for out, ways in comp_graph.ways.items():
         f_out = ("F", out)
         andor_graph.add_node(f_out, kind="field", label=str(out))
         field_nodes.add(f_out)
 
-        for i, r in enumerate(recipes):
-            if not r["deps"]:
+        for i, way in enumerate(ways):
+            if not way["needs"]:
                 continue   # Skip loader recipes (no dependencies, no edges)
-            r_node = ("R", out, i)
-            andor_graph.add_node(r_node, kind="recipe", out=out, idx=i, label=f"{i+1}")
-            recipe_nodes.append(r_node)
+            r_node = ("W", out, i)
+            andor_graph.add_node(r_node, kind="way", out=out, idx=i, label=f"{i+1}")
+            way_nodes.append(r_node)
 
-            # OR edge: field -> recipe
+            # OR edge: field -> way
             andor_graph.add_edge(f_out, r_node, kind="alt")
 
-            # AND edges: recipe -> deps
-            for dep in r["deps"]:
-                f_dep = ("F", dep)
-                andor_graph.add_node(f_dep, kind="field", label=str(dep))
-                field_nodes.add(f_dep)
-                andor_graph.add_edge(r_node, f_dep, kind="req")
+            # AND edges: way -> needs
+            for need in way["needs"]:
+                f_need = ("F", need)
+                andor_graph.add_node(f_need, kind="field", label=str(need))
+                field_nodes.add(f_need)
+                andor_graph.add_edge(r_node, f_need, kind="req")
 
     field_nodes = list(field_nodes)
 
     # --- layout only the FIELD subgraph (min crossings), then pin recipes near outputs ---
     field_sub = nx.DiGraph()
     field_sub.add_nodes_from(field_nodes)
-    # induced edges between fields if any recipe references (dep -> out)
+    # induced edges between fields if any way references (need -> out)
     for (u, v, d) in andor_graph.edges(data=True):
-        if u[0] == "R" and v[0] == "F":
-            # u is recipe(out,i), v is dep field; add dep -> out for layout
+        if u[0] == "W" and v[0] == "F":
+            # u is way(out,i), v is need field; add need -> out for layout
             out_field = ("F", u[1])
-            dep_field = v
-            field_sub.add_edge(dep_field, out_field)
+            need_field = v
+            field_sub.add_edge(need_field, out_field)
 
  
     try:
@@ -327,53 +323,51 @@ def plot_and_or_graph(comp_graph, ax, title="Computation graph"):
     pos = dict(posF)
 
     #
-    # place recipe nodes on a ring around the output field
+    # place way nodes on a ring around the output field
     #
     ring_r = 0.08
     ring_r = 30
-    for out, recipes in comp_graph.recipes.items():
+    for out, ways in comp_graph.ways.items():
         f_out = ("F", out)
         if f_out not in pos:
             continue
 
         x0, y0 = pos[f_out]
-        n = len(recipes)
+        n = len(ways)
         if n == 0:
             continue
 
         for i in range(n):
-            r_node = ("R", out, i)
+            r_node = ("W", out, i)
             angle = 2.0 * np.pi * i / n
             angle += np.pi / 2.0  
             pos[r_node] = (
                 x0 + ring_r * np.cos(angle),
                 y0 + ring_r * np.sin(angle),
             )
-    # --- colors per recipe ---
+    # --- colors per way ---
     color_cycle = itertools.cycle(plt.cm.tab10.colors)
-    recipe_color = {}
-    # for r in recipe_nodes:
-    #     recipe_color[r] = next(color_cycle)
-    for out in sorted(comp_graph.recipes.keys(), key=str):
-        for i, r in enumerate(comp_graph.recipes[out]):
-            if not r["deps"]:
+    way_color = {}
+    for out in sorted(comp_graph.ways.keys(), key=str):
+        for i, way in enumerate(comp_graph.ways[out]):
+            if not way["needs"]:
                 continue
-            recipe_color[("R", out, i)] = next(color_cycle)
+            way_color[("W", out, i)] = next(color_cycle)
 
 
-    # recipe nodes grouped by color (so each group gets its color)
-    for r in recipe_nodes:
+    # way nodes grouped by color (so each group gets its color)
+    for r in way_nodes:
         nx.draw_networkx_nodes(
             andor_graph, pos,
             nodelist=[r],
             node_shape="o",
             node_size=450,
             # edgecolors="black",
-            node_color=[recipe_color[r]],
+            node_color=[way_color[r]],
             ax=ax
         )
-    recipe_labels = {n: andor_graph.nodes[n]["label"] for n in recipe_nodes}
-    nx.draw_networkx_labels(andor_graph, pos, labels=recipe_labels, font_size=8, ax=ax, font_color='white')
+    way_labels = {n: andor_graph.nodes[n]["label"] for n in way_nodes}
+    nx.draw_networkx_labels(andor_graph, pos, labels=way_labels, font_size=8, ax=ax, font_color='white')
 
     # --- draw nodes ---
     nx.draw_networkx_nodes(
@@ -390,10 +384,10 @@ def plot_and_or_graph(comp_graph, ax, title="Computation graph"):
     nx.draw_networkx_labels(andor_graph, pos, labels=field_labels, font_size=10, ax=ax)
 
     # --- edges ---
-    # field -> recipe edges: colored by recipe (same as recipe node)
-    for r in recipe_nodes:
+    # field -> way edges: colored by way (same as way node)
+    for r in way_nodes:
         u = ("F", r[1])   # output field node
-        v = r            # recipe node
+        v = r            # way node
         if andor_graph.has_edge(u, v):
             nx.draw_networkx_edges(
                 andor_graph, pos,
@@ -402,14 +396,14 @@ def plot_and_or_graph(comp_graph, ax, title="Computation graph"):
                 arrows=True, arrowstyle="->", arrowsize=16,
                 # arrows=False,
                 width=4,
-                edge_color=[recipe_color[r]],
+                edge_color=[way_color[r]],
                 connectionstyle="arc3,rad=0.08",
                 min_source_margin=10, min_target_margin=20,
                 ax=ax
             )
 
-    # recipe -> dep edges: colored by recipe
-    for r in recipe_nodes:
+    # way -> need edges: colored by way
+    for r in way_nodes:
         req_edges = [(v, u) for (u, v, d) in andor_graph.out_edges(r, data=True)
                     if d.get("kind") == "req"]  # <-- flipped
         if req_edges:
@@ -419,7 +413,7 @@ def plot_and_or_graph(comp_graph, ax, title="Computation graph"):
                 arrows=True, arrowstyle="->", arrowsize=16,
                 # arrows=False,
                 width=2.2,
-                edge_color=[recipe_color[r]],
+                edge_color=[way_color[r]],
                 connectionstyle="arc3,rad=0.18",
                 min_source_margin=20, min_target_margin=10,
                 ax=ax

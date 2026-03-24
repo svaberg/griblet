@@ -5,73 +5,70 @@ import pytest
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
-from griblet import ComputationGraph
-from griblet import UnresolvableFieldError
+from griblet import Graph, NoPathError
+from griblet.pathfinder import Pathfinder
 
 import plots
 
 _figsize=(12, 9)
 
 
-def compute_costs_and_trees(graph, fields):
+def compute_costs_and_paths(graph, fields):
     costs = {}
-    trees = {}
-    for field in fields:
+    paths = {}
+    for name in fields:
         try:
-            cost, tree = graph.plan(field)
-            costs[field] = cost
-            trees[field] = tree
-            print(field, cost)
-        except UnresolvableFieldError as e:
-            print(f"Cannot resolve field '{field}': {e}")
-    return costs, trees
+            cost, path = Pathfinder(graph).find_path(name)
+            costs[name] = cost
+            paths[name] = path
+            print(name, cost)
+        except NoPathError as e:
+            print(f"Cannot resolve field '{name}': {e}")
+    return costs, paths
     
 
-def plot_networkx_graph(loader, recipes_graph, filename):
+def plot_networkx_graph(loader, ways_graph, filename):
 
     loader_graph = loader.as_graph()
-    computation_graph = ComputationGraph(loader_graph)
+    graph = Graph(loader_graph)
     
-    print(computation_graph)
+    print(graph)
     fig, ax = plt.subplots(figsize=_figsize)
-    plots.plot_and_or_graph(computation_graph, ax=ax)
+    plots.plot_and_or_graph(graph, ax=ax)
     plt.savefig(filename + "_loader.png", dpi=150)
 
-    computation_graph.merge(recipes_graph)
-    print(computation_graph)
+    graph.merge(ways_graph)
+    print(graph)
     fig, ax = plt.subplots(figsize=_figsize)
-    plots.plot_and_or_graph(computation_graph, ax=ax)
+    plots.plot_and_or_graph(graph, ax=ax)
     plt.savefig(filename + "_with_recipes.png", dpi=150)
 
-    
-    # # Use the solver 
     try:
-        cost1, tree1 = computation_graph.plan('volume')
+        cost1, path1 = Pathfinder(graph).find_path("volume")
 
-        # (Optionally) remove 'area' as a recipe or node, then resolve again
-        computation_graph.recipes.pop('area', None)
-        cost2, tree2 = computation_graph.plan('volume')
+        graph.ways.pop("area", None)
+        cost2, path2 = Pathfinder(graph).find_path("volume")
 
         fig, ax = plt.subplots(figsize=_figsize)
         plots.plot_computation_paths(
-            computation_graph,
-            [tree1, tree2],  # list of tree roots
+            graph,
+            [path1, path2],
             ax=ax,
             labels=["Best path", "Path after removing area"],
             title="Optimal computation paths before and after removing 'area'"
         )
         fig.tight_layout()
         fig.savefig(filename + "_computation_paths.png", dpi=150)
-    except Exception as e:
-        print(f"Error during dependency solving: {e}")
+    except NoPathError as e:
+        print(f"Error during pathfinding: {e}")
 
     
-    fields = computation_graph.list_fields()
+    fields = graph.fields()
     print(f"Fields in graph: {fields}")
 
-    costs, trees = compute_costs_and_trees(computation_graph, fields)    
-    for field, cost in costs.items():
-        print(f"{field}: {cost:.2f}")
+    costs, paths = compute_costs_and_paths(graph, fields)
+    for name, cost in costs.items():
+        print(f"{name}: {cost:.2f}")
 
     # # Print in order of increasing cost
     # print("\nFields sorted by cost:")
@@ -86,9 +83,9 @@ def plot_networkx_graph(loader, recipes_graph, filename):
 
 def test_demo_networkx_generates_expected_artifacts(tmp_path):
     output_prefix = tmp_path / "demo_networkx.png"
-    from room_demo import make_room_recipes_graph, RoomLoader
+    from room_demo import make_room_graph, RoomLoader
 
-    plot_networkx_graph(RoomLoader(), make_room_recipes_graph(), str(output_prefix))
+    plot_networkx_graph(RoomLoader(), make_room_graph(), str(output_prefix))
 
     assert (tmp_path / "demo_networkx.png_loader.png").exists()
     assert (tmp_path / "demo_networkx.png_with_recipes.png").exists()
@@ -100,13 +97,13 @@ def test_demo_networkx_generates_expected_artifacts(tmp_path):
 if __name__ == "__main__":
 
     # from examples.room_demo import RoomLoader
-    from room_demo import make_room_recipes_graph, RoomLoader
+    from room_demo import make_room_graph, RoomLoader
     loader = RoomLoader()
-    room_recipies_graph = make_room_recipes_graph()
-    plot_networkx_graph(loader, room_recipies_graph, "demo_networkx.png")
+    room_graph = make_room_graph()
+    plot_networkx_graph(loader, room_graph, "demo_networkx.png")
 
 
-    # from batsrus_demo import make_wind_recipes_graph, WindLoader
+    # from batsrus_demo import make_wind_graph, WindLoader
     # loader = WindLoader()
-    # batsrus_recipes_graph = make_wind_recipes_graph()
-    # plot_networkx_graph(loader, batsrus_recipes_graph, "demo_batsrus_networkx.png")
+    # wind_graph = make_wind_graph()
+    # plot_networkx_graph(loader, wind_graph, "demo_batsrus_networkx.png")
