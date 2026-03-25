@@ -8,7 +8,7 @@ version = "0.2.0"
 description = "Carve computation trees from a burl of dependencies."
 readme = "README.md"
 requires-python = ">=3.8"
-license = { file = "LICENSE" }
+license = "MIT"
 authors = [
   { name = "Dag Evensberget", email = "dag.evensberget@gmail.com" }
 ]
@@ -18,12 +18,14 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "build",
     "pytest",
     "numpy",
     "scipy",
     "astropy",
     "networkx",
     "matplotlib",
+    "twine",
 ]
 
 [project.urls]

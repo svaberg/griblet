@@ -2,14 +2,13 @@ name: griblet
 channels:
   - conda-forge
 dependencies:
-  - python=3.11
-  - pip
+  - python
   - setuptools>=61
+  - build
   - numpy
   - scipy
   - astropy
   - networkx
   - matplotlib
   - pytest
-  - pip:
-      - -e .
+  - twine

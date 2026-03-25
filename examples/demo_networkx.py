@@ -11,25 +11,21 @@ from room_demo import make_room_recipes_graph, RoomLoader
 import plots
 
 
-if __name__ == "__main__":
-    loader = RoomLoader()
+def plot_networkx_graph(loader, recipes_graph, filename):
     loader_graph = loader.as_graph()
     computation_graph = ComputationGraph(loader_graph)
-    
+
     print(computation_graph)
     fig, ax = plt.subplots()
     plots.plot_recipe_colored_edges_curved(computation_graph, ax=ax)
-    plt.savefig("flattened.png", dpi=150)
+    plt.savefig(filename + "_loader.png", dpi=150)
 
-
-    room_recipies_graph = make_room_recipes_graph()
-    computation_graph.merge(room_recipies_graph)
+    computation_graph.merge(recipes_graph)
     print(computation_graph)
     fig, ax = plt.subplots()
     plots.plot_recipe_colored_edges_curved(computation_graph, ax=ax)
-    plt.savefig("with_recipes.png", dpi=150)
+    plt.savefig(filename + "_with_recipes.png", dpi=150)
 
-    
     # Use the solver 
     solver = DependencySolver(computation_graph)
     cost1, tree1 = solver.resolve_field('volume')
@@ -48,17 +44,10 @@ if __name__ == "__main__":
         title="Optimal computation paths before and after removing 'area'"
     )
     fig.tight_layout()
-    fig.savefig("computation_paths.png", dpi=150)
+    fig.savefig(filename + "_computation_paths.png", dpi=150)
 
 
-    fig, ax = plt.subplots(figsize=(11, 8))
-    plots.plot_and_or_graph(computation_graph, ax=ax)
-    fig.savefig("and_or.png", dpi=150)
-
-    fig, ax = plt.subplots(figsize=(11, 8))
-    plots.plot_and_or_with_nubs(computation_graph, ax=ax)
-    fig.savefig("and_or_with_nubs.png", dpi=150)
-
-    fig, ax = plt.subplots(figsize=(11, 8))
-    plots.plot_and_or_graph_c(computation_graph, ax=ax)
-    fig.savefig("and_or.png", dpi=150)
+if __name__ == "__main__":
+    loader = RoomLoader()
+    room_recipies_graph = make_room_recipes_graph()
+    plot_networkx_graph(loader, room_recipies_graph, "demo_networkx.png")

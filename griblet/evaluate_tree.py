@@ -30,7 +30,7 @@ def evaluate_tree(node, graph):
     values = [evaluate_tree(dep, graph) for dep in node.deps]
     dep_fields = tuple(dep.field for dep in node.deps)
     for recipe in graph.recipes[node.field]:
-        if dep_fields == recipe['deps']:
+        if dep_fields == tuple(recipe['deps']):
             cost_val = recipe['cost']() if callable(recipe['cost']) else recipe['cost']
             break
     else:

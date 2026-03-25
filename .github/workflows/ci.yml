@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "v*"
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: griblet
+          environment-file: environment.yml
+          auto-activate-base: false
+
+      - name: Run tests
+        shell: bash -el {0}
+        run: conda run -n griblet pytest
+
+      - name: Build package
+        shell: bash -el {0}
+        run: conda run -n griblet python -m build
+
+      - name: Check distributions
+        shell: bash -el {0}
+        run: conda run -n griblet python -m twine check dist/*

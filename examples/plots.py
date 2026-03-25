@@ -388,6 +388,7 @@ def plot_and_or_graph(computation_graph, ax, title="AND–OR computation graph")
 
     ax.set_title(title)
     ax.axis("off")
+    return G, pos
 
 
 from matplotlib.patches import Circle, Wedge, FancyArrowPatch

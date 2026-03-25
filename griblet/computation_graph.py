@@ -32,7 +32,7 @@ class ComputationGraph:
             deps = []
 
         recipe = dict(
-            deps=list(deps),
+            deps=tuple(deps),
             func=func,
             cost=cost,
             metadata=metadata or {},
