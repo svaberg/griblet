@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "griblet"
-version = "0.2.0"
+version = "0.3.0"
 description = "Carve computation trees from a burl of dependencies."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -33,4 +33,4 @@ Issues = "https://github.com/svaberg/griblet/issues"
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "examples"]
-python_files = ["test_*.py", "demo_*.py", "batsrus_demo.py"]
+python_files = ["test_*.py", "demo_*.py"]

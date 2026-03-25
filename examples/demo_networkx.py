@@ -103,7 +103,7 @@ if __name__ == "__main__":
     plot_networkx_graph(loader, room_graph, "demo_networkx.png")
 
 
-    # from batsrus_demo import make_wind_graph, WindLoader
+    # from demo_batsrus import make_wind_graph, WindLoader
     # loader = WindLoader()
     # wind_graph = make_wind_graph()
     # plot_networkx_graph(loader, wind_graph, "demo_batsrus_networkx.png")

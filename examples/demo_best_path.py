@@ -5,6 +5,7 @@ from griblet import Graph
 from griblet.pathfinder import Pathfinder
 from room_demo import make_room_graph, RoomLoader
 
+
 def print_path(node, indent=0):
     if node is None:
         print(" " * indent + "(unresolvable)")
@@ -31,7 +32,7 @@ def solve_volume():
     return graph, cost, path
 
 
-def test_demo_dependency_solver_flow():
+def test_demo_best_path_flow():
     graph, cost, path = solve_volume()
     vol_value = graph.compute("volume")
     vol_value2 = graph.compute("volume")
@@ -43,11 +44,11 @@ def test_demo_dependency_solver_flow():
 if __name__ == "__main__":
     graph, cost, path = solve_volume()
 
-    print("\n=== Dependency Solver Demo (Room Volume, multiple paths) ===\n")
+    print("\n=== Best Path Demo (Room Volume, multiple paths) ===\n")
     print(f"Best total cost: {cost:.2f}\nPath:")
     print_path(path)
 
-    # 3. Evaluate and show the computation (no cache, so both calls should behave the same)
+    # Evaluate and show the computation (no cache, so both calls should behave the same)
     print("\nFirst evaluation:")
     vol_value = graph.compute("volume")
     print("Volume:", vol_value)
