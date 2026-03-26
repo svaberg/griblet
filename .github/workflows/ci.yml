@@ -22,7 +22,7 @@ jobs:
 
       - name: Run tests
         shell: bash -el {0}
-        run: conda run -n griblet pytest
+        run: conda run -n griblet python -m pytest
 
       - name: Build package
         shell: bash -el {0}
