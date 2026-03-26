@@ -1,26 +1,28 @@
 <table>
 <tr>
-<td><img src="griblet-logo-256.png" alt="griblet logo" width="128"/></td>
+<td><img src="https://raw.githubusercontent.com/svaberg/griblet/master/griblet-logo-256.png" alt="griblet logo" width="128"/></td>
 <td><h1>griblet</h1></td>
 </tr>
 </table>
 
-
 **Carve computation trees from a burl of dependencies.**
 
-Griblet is a dynamic, cache-aware calculation engine for building and evaluating computation trees from a flexible graph of possible dependencies and recipes.
+Griblet builds and evaluates computation trees from a graph with more than one way to reach each field.
 
-- Supports alternative computation paths for each result
-- Dynamic costs, including cache- and disk-aware lazy evaluation
-- Clean separation of recipes, cache, loader, and evaluation logic
-- Suitable for scientific post-processing, engineering workflows, and flexible data processing pipelines
+- more than one path to a result
+- dynamic cost, including cache-aware and loader-aware evaluation
+- suitable for scientific post-processing and derived quantities
 
-## Developer install
+## Installation
+
+Install `griblet` in the usual way:
+
 ```bash
-git clone https://github.com/svaberg/griblet.git
-cd griblet
-pip install -e '.[dev]'
+pip install griblet
 ```
+
+The `griblet` package has no runtime dependencies.
+
 ## Example
 
 Start by building a computation graph. The graph below can reach `volume` in two ways: one through `area`, and one directly from `length`, `width`, and `height`.
@@ -63,5 +65,3 @@ print(value)
 ```
 
 If the graph has no valid path to the requested field, `griblet` raises `UnresolvableFieldError`.
-
----

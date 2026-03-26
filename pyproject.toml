@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "griblet"
 version = "0.2.0"
 description = "Carve computation trees from a burl of dependencies."
-readme = "README.md"
+readme = "PYPI.md"
 requires-python = ">=3.8"
 license = "MIT"
 authors = [
