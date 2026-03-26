@@ -5,9 +5,8 @@ dependencies:
   - python
   - setuptools>=61
   - build
+  - pint
   - numpy
-  - scipy
-  - astropy
   - networkx
   - matplotlib
   - pytest

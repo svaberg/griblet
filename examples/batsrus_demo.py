@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import scipy.constants
 
 from griblet import ComputationGraph
 from griblet import BaseLoader
@@ -8,6 +7,9 @@ from griblet import DependencySolver
 from griblet import evaluate_tree
 
 _fallback_gamma = 5/3
+_mu_0 = 4e-7 * np.pi
+_proton_mass = 1.67262192369e-27
+_boltzmann = 1.380649e-23
 
 
 class WindLoader(BaseLoader):
@@ -106,13 +108,13 @@ def make_wind_recipes_graph():
     def c_s_gamma(P, rho, GAMMA): return np.sqrt(GAMMA * P / rho)
     cg.add_recipe("c_s (m/s)", c_s_gamma, deps=["P (Pa)", "Rho (kg/m^3)", "GAMMA"], cost=1.0)
 
-    def c_A(B, rho): return B / np.sqrt(scipy.constants.mu_0 * rho)
+    def c_A(B, rho): return B / np.sqrt(_mu_0 * rho)
     cg.add_recipe("c_A (m/s)", c_A, deps=["B (T)", "Rho (kg/m^3)"], cost=1.0)
 
-    def c_A_r(B_r, rho): return np.abs(B_r) / np.sqrt(scipy.constants.mu_0 * rho)
+    def c_A_r(B_r, rho): return np.abs(B_r) / np.sqrt(_mu_0 * rho)
     cg.add_recipe("c_A_r (m/s)", c_A_r, deps=["B_r (T)", "Rho (kg/m^3)"], cost=1.0)
 
-    def P_b(B): return B**2 / (2.0 * scipy.constants.mu_0)
+    def P_b(B): return B**2 / (2.0 * _mu_0)
     cg.add_recipe("P_b (Pa)", P_b, deps=["B (T)"], cost=0.5)
 
     def Ma(U, c_s): return U / c_s
@@ -130,10 +132,10 @@ def make_wind_recipes_graph():
     def R2rho(R_m, rho): return (R_m**2) * rho
     cg.add_recipe("R^2 Rho (kg/m)", R2rho, deps=["R (m)", "Rho (kg/m^3)"], cost=0.5)
 
-    def Ne(rho): return rho / scipy.constants.proton_mass
+    def Ne(rho): return rho / _proton_mass
     cg.add_recipe("Ne (1/m^3)", Ne, deps=["Rho (kg/m^3)"], cost=0.3)
 
-    def T_ideal(P, Ne): return P / (2.0 * Ne * scipy.constants.Boltzmann)
+    def T_ideal(P, Ne): return P / (2.0 * Ne * _boltzmann)
     cg.add_recipe("T ideal (K)", T_ideal, deps=["P (Pa)", "Ne (1/m^3)"], cost=0.7)
 
     return cg

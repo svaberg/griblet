@@ -19,10 +19,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "build",
+    "pint",
     "pytest",
     "numpy",
-    "scipy",
-    "astropy",
     "networkx",
     "matplotlib",
     "twine",

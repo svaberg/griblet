@@ -1,9 +1,7 @@
-import astropy.units as u
-
 from griblet import DependencySolver
 from griblet import ComputationGraph
 from griblet import evaluate_tree
-from room_demo import make_room_recipes_graph, RoomLoader
+from room_demo import make_room_recipes_graph, RoomLoader, ureg
 
 def print_tree(node, indent=0):
     if node is None:
@@ -42,4 +40,4 @@ if __name__ == "__main__":
     print("Volume:", vol_value2)
 
     print("\nVolume in liters:")
-    print(vol_value.to(u.L))
+    print(vol_value.to(ureg.liter))

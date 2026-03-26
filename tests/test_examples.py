@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -9,7 +8,7 @@ from griblet import ComputationGraph, DependencySolver, UnresolvableFieldError, 
 
 from batsrus_demo import WindLoader, make_wind_recipes_graph
 from demo_networkx import plot_networkx_graph
-from room_demo import RoomLoader, make_room_recipes_graph
+from room_demo import RoomLoader, make_room_recipes_graph, ureg
 import plots
 
 
@@ -29,8 +28,8 @@ def test_demo_dependency_solver_flow():
     value_second = evaluate_tree(tree, graph)
 
     assert cost == pytest.approx(2.2)
-    assert value.to_value(u.m**3) == pytest.approx([60.0])
-    assert value_second.to_value(u.m**3) == pytest.approx([60.0])
+    assert value.to(ureg.meter**3).magnitude == pytest.approx([60.0])
+    assert value_second.to(ureg.meter**3).magnitude == pytest.approx([60.0])
 
 
 def test_demo_rerouting_flow():
@@ -48,8 +47,8 @@ def test_demo_rerouting_flow():
     graph.recipes.pop("length", None)
     solver = DependencySolver(graph)
 
-    assert value_1.to_value(u.m**3) == pytest.approx([60.0])
-    assert value_2.to_value(u.m**3) == pytest.approx([60.0])
+    assert value_1.to(ureg.meter**3).magnitude == pytest.approx([60.0])
+    assert value_2.to(ureg.meter**3).magnitude == pytest.approx([60.0])
     assert cost_2 > cost_1
 
     with pytest.raises(UnresolvableFieldError):

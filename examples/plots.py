@@ -350,8 +350,8 @@ def plot_and_or_graph(computation_graph, ax, title="AND–OR computation graph")
     try:
         from networkx.drawing.nx_agraph import graphviz_layout
         pos = graphviz_layout(G, prog="dot")
-    except Exception:
-        pos = nx.kamada_kawai_layout(G)
+    except ImportError:
+        pos = nx.spring_layout(G, seed=42)
 
     # --- split nodes ---
     field_nodes  = [n for n,d in G.nodes(data=True) if d["kind"]=="field"]
@@ -406,8 +406,8 @@ def plot_and_or_with_nubs(computation_graph, ax, title="AND–OR (recipes as nub
     try:
         from networkx.drawing.nx_agraph import graphviz_layout
         pos = graphviz_layout(DG, prog="dot")
-    except Exception:
-        pos = nx.kamada_kawai_layout(DG)
+    except ImportError:
+        pos = nx.spring_layout(DG, seed=42)
 
     # de-overlap exact collisions (dot sometimes stacks)
     buckets = {}
@@ -576,7 +576,7 @@ def plot_and_or_graph_c(comp_graph, ax, title="Computation graph"):
         from networkx.drawing.nx_agraph import graphviz_layout
         posF = graphviz_layout(field_sub, prog="dot")
     except ImportError:
-        posF = nx.kamada_kawai_layout(field_sub)
+        posF = nx.spring_layout(field_sub, seed=42)
 
 
     # # de-overlap exact collisions (dot sometimes stacks)
