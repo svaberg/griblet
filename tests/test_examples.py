@@ -4,28 +4,28 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from griblet import ComputationGraph, DependencySolver, UnresolvableFieldError, evaluate_tree
+from griblet import Graph, NoPathError
+from griblet.pathfinder import Pathfinder
 
-from batsrus_demo import WindLoader, make_wind_recipes_graph
+from demo_batsrus import WindLoader, make_wind_graph
 from demo_networkx import plot_networkx_graph
-from room_demo import RoomLoader, make_room_recipes_graph, ureg
+from room_demo import RoomLoader, make_room_graph, ureg
 import plots
 
 
-def make_room_graph():
-    graph = ComputationGraph(RoomLoader().as_graph())
-    graph.merge(make_room_recipes_graph())
+def build_room_graph():
+    graph = Graph(RoomLoader().as_graph())
+    graph.merge(make_room_graph())
     return graph
 
 
-def test_demo_dependency_solver_flow():
-    graph = make_room_graph()
+def test_demo_best_path_flow():
+    graph = build_room_graph()
 
-    solver = DependencySolver(graph)
-    cost, tree = solver.resolve_field("volume")
+    cost, path = Pathfinder(graph).find_path("volume")
 
-    value = evaluate_tree(tree, graph)
-    value_second = evaluate_tree(tree, graph)
+    value = graph.compute("volume")
+    value_second = graph.compute("volume")
 
     assert cost == pytest.approx(2.2)
     assert value.to(ureg.meter**3).magnitude == pytest.approx([60.0])
@@ -33,35 +33,31 @@ def test_demo_dependency_solver_flow():
 
 
 def test_demo_rerouting_flow():
-    graph = make_room_graph()
+    graph = build_room_graph()
 
-    solver = DependencySolver(graph)
-    cost_1, tree_1 = solver.resolve_field("volume")
-    value_1 = evaluate_tree(tree_1, graph)
+    cost_1, _path_1 = Pathfinder(graph).find_path("volume")
+    value_1 = graph.compute("volume")
 
-    graph.recipes.pop("area", None)
-    solver = DependencySolver(graph)
-    cost_2, tree_2 = solver.resolve_field("volume")
-    value_2 = evaluate_tree(tree_2, graph)
+    graph.ways.pop("area", None)
+    cost_2, _path_2 = Pathfinder(graph).find_path("volume")
+    value_2 = graph.compute("volume")
 
-    graph.recipes.pop("length", None)
-    solver = DependencySolver(graph)
+    graph.ways.pop("length", None)
 
     assert value_1.to(ureg.meter**3).magnitude == pytest.approx([60.0])
     assert value_2.to(ureg.meter**3).magnitude == pytest.approx([60.0])
     assert cost_2 > cost_1
 
-    with pytest.raises(UnresolvableFieldError):
-        solver.resolve_field("volume")
+    with pytest.raises(NoPathError):
+        Pathfinder(graph).find_path("volume")
 
 
 def test_batsrus_example_flow_resolves_and_evaluates():
-    graph = ComputationGraph(WindLoader().as_graph())
-    graph.merge(make_wind_recipes_graph())
+    graph = Graph(WindLoader().as_graph())
+    graph.merge(make_wind_graph())
 
-    solver = DependencySolver(graph)
-    cost, tree = solver.resolve_field("T ideal (K)")
-    value = evaluate_tree(tree, graph)
+    cost, _path = Pathfinder(graph).find_path("T ideal (K)")
+    value = graph.compute("T ideal (K)")
 
     assert cost > 0
     assert value.shape == (10,)
@@ -69,9 +65,8 @@ def test_batsrus_example_flow_resolves_and_evaluates():
 
 
 def test_plot_helpers_render_room_graph():
-    graph = make_room_graph()
-    solver = DependencySolver(graph)
-    _, tree = solver.resolve_field("volume")
+    graph = build_room_graph()
+    _, path = Pathfinder(graph).find_path("volume")
 
     fig, ax = plt.subplots()
     plots.plot_flattened_computation_graph(graph, ax=ax)
@@ -79,7 +74,7 @@ def test_plot_helpers_render_room_graph():
     plt.close(fig)
 
     fig, ax = plt.subplots()
-    plots.plot_computation_paths(graph, [tree], ax=ax)
+    plots.plot_computation_paths(graph, [path], ax=ax)
     assert ax.has_data()
     plt.close(fig)
 
@@ -93,7 +88,7 @@ def test_plot_helpers_render_room_graph():
 def test_demo_networkx_generates_expected_artifacts(tmp_path):
     output_prefix = tmp_path / "demo_networkx.png"
 
-    plot_networkx_graph(RoomLoader(), make_room_recipes_graph(), str(output_prefix))
+    plot_networkx_graph(RoomLoader(), make_room_graph(), str(output_prefix))
 
     assert (tmp_path / "demo_networkx.png_loader.png").exists()
     assert (tmp_path / "demo_networkx.png_with_recipes.png").exists()

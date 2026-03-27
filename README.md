@@ -23,45 +23,40 @@ pip install -e '.[dev]'
 ```
 ## Example
 
-Start by building a computation graph. The graph below can reach `volume` in two ways: one through `area`, and one directly from `length`, `width`, and `height`.
+Start by building a graph. The graph below can reach `volume` in two ways: one through `area`, and one directly from `length`, `width`, and `height`.
 
 ```python
-from griblet import ComputationGraph, DependencySolver, evaluate_tree
+from griblet import Graph
 
-graph = ComputationGraph()
+graph = Graph()
 
-graph.add_recipe("length", lambda: 5.0)
-graph.add_recipe("width", lambda: 4.0)
-graph.add_recipe("height", lambda: 3.0)
+graph.add("length", lambda: 5.0)
+graph.add("width", lambda: 4.0)
+graph.add("height", lambda: 3.0)
 
-graph.add_recipe(
+graph.add(
     "area",
     lambda length, width: length * width,
-    deps=["length", "width"],
+    needs=["length", "width"],
     cost=2.0,
 )
 
-graph.add_recipe(
+graph.add(
     "volume",
     lambda area, height: area * height,
-    deps=["area", "height"],
+    needs=["area", "height"],
     cost=2.0,
 )
-graph.add_recipe(
+graph.add(
     "volume",
     lambda length, width, height: length * width * height,
-    deps=["length", "width", "height"],
+    needs=["length", "width", "height"],
     cost=3.0,
 )
 
-solver = DependencySolver(graph)
-cost, tree = solver.resolve_field("volume")
-value = evaluate_tree(tree, graph)
-
-print(cost)
-print(value)
+print(graph.compute("volume"))
 ```
 
-If the graph has no valid path to the requested field, `griblet` raises `UnresolvableFieldError`.
+If the graph has no valid path to the requested field, `griblet` raises `NoPathError`.
 
 ---

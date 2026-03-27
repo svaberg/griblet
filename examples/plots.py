@@ -16,12 +16,12 @@ def flattened_dependency_graph(computation_graph):
     """
     DG = nx.DiGraph()
     # Add all fields as nodes first
-    for field in computation_graph.recipes:
+    for field in computation_graph.ways:
         DG.add_node(field)
     # Add edges for all recipes with dependencies
-    for output, recipe_list in computation_graph.recipes.items():
+    for output, recipe_list in computation_graph.ways.items():
         for recipe in recipe_list:
-            for dep in recipe['deps']:
+            for dep in recipe['needs']:
                 DG.add_edge(dep, output)
     return DG
 
@@ -29,16 +29,16 @@ def collect_subtree_nodes_edges(tree):
     """
     Collect nodes and edges from a resolved computation tree.
 
-    Traverses a ComputationTreeNode and returns:
+    Traverses a PathNode and returns:
     - nodes: set of field names in the tree
     - edges: set of (dep_field, field) edges used by the plan
     """
     nodes = set()
     edges = set()
     def visit(node):
-        nodes.add(node.field)
-        for dep in getattr(node, "deps", []):
-            edges.add((dep.field, node.field))
+        nodes.add(node.name)
+        for dep in getattr(node, "needs", []):
+            edges.add((dep.name, node.name))
             visit(dep)
     visit(tree)
     return nodes, edges
@@ -62,7 +62,7 @@ def plot_flattened_computation_graph(
     if show_node_metadata:
         node_labels = {}
         for n in DG.nodes:
-            recipes = computation_graph.recipes.get(n, [])
+            recipes = computation_graph.ways.get(n, [])
             lines = [str(n)]
             for i, r in enumerate(recipes):
                 # Format cost (show 'callable' if not number)
@@ -123,7 +123,7 @@ def plot_recipe_colored_edges(computation_graph, ax, node_pos=None):
     """
     DG = nx.DiGraph()
     # Add all nodes first
-    for node in computation_graph.recipes.keys():
+    for node in computation_graph.ways.keys():
         DG.add_node(node)
     # Layout
     if node_pos is None:
@@ -134,11 +134,11 @@ def plot_recipe_colored_edges(computation_graph, ax, node_pos=None):
     edge_segments = []
     edge_colors = []
     legend_labels = []
-    for node, recipes in computation_graph.recipes.items():
+    for node, recipes in computation_graph.ways.items():
         for i, recipe in enumerate(recipes):
             color = next(color_cycle)
             label = f"{node} recipe {i+1}"
-            for dep in recipe['deps']:
+            for dep in recipe['needs']:
                 edge_segments.append((dep, node))
                 edge_colors.append(color)
                 legend_labels.append(label)
@@ -176,7 +176,7 @@ def plot_recipe_colored_edges_curved(computation_graph, ax, node_pos=None):
     the same dependencies.
     """
     DG = nx.DiGraph()
-    for node in computation_graph.recipes:
+    for node in computation_graph.ways:
         DG.add_node(node)
     if node_pos is None:
         node_pos = nx.spring_layout(DG, seed=42)
@@ -184,15 +184,15 @@ def plot_recipe_colored_edges_curved(computation_graph, ax, node_pos=None):
     rad_vals = [-0.3, 0, 0.3, 0.6, -0.6, 0.9, -0.9]
     legend_handles = []
     seen_labels = set()
-    for node, recipes in computation_graph.recipes.items():
+    for node, recipes in computation_graph.ways.items():
         for i, recipe in enumerate(recipes):
-            if not recipe['deps']:
+            if not recipe['needs']:
                 continue  # Skip loader recipes (no dependencies, no edges)
             color = next(color_cycle)
             rad = rad_vals[i % len(rad_vals)]
             label = f"{node} recipe {i+1}"
             # Draw edges for this recipe
-            for dep in recipe['deps']:
+            for dep in recipe['needs']:
                 nx.draw_networkx_edges(
                     DG, node_pos, edgelist=[(dep, node)],
                     edge_color=[color], arrowsize=20, width=3, ax=ax,
@@ -228,8 +228,8 @@ def plot_computation_paths(
     Plot multiple computation trees as colored, curved arrows on top of the 
     flattened dependency graph.
 
-    computation_graph: ComputationGraph object (with .recipes)
-    trees: list of computation tree roots (e.g., from DependencySolver.resolve_field)
+    computation_graph: Graph object (with .ways)
+    trees: list of path roots (e.g., from Pathfinder.find_path)
     ax: matplotlib axis to draw on
     labels: list of labels for legend (optional)
     colors: list of colors (optional)
@@ -237,9 +237,9 @@ def plot_computation_paths(
     # Build flattened dependency graph
     DG = flattened_dependency_graph(computation_graph)
     # DG = nx.DiGraph()
-    # for node, recipes in computation_graph.recipes.items():
+    # for node, recipes in computation_graph.ways.items():
     #     for recipe in recipes:
-    #         for dep in recipe['deps']:
+    #         for dep in recipe['needs']:
     #             DG.add_edge(dep, node)
     # Compute layout
     pos = nx.spring_layout(DG, seed=42)
@@ -308,7 +308,7 @@ def and_or_graph(computation_graph):
     """
     G = nx.DiGraph()
 
-    for out, recipes in computation_graph.recipes.items():
+    for out, recipes in computation_graph.ways.items():
         f_out = ("F", out)
         G.add_node(f_out, kind="field", field=out)
 
@@ -323,7 +323,7 @@ def and_or_graph(computation_graph):
             )
             G.add_edge(f_out, r_node)
 
-            for dep in r["deps"]:
+            for dep in r["needs"]:
                 f_dep = ("F", dep)
                 G.add_node(f_dep, kind="field", field=dep)
                 G.add_edge(r_node, f_dep)
@@ -334,14 +334,14 @@ def and_or_graph(computation_graph):
 def plot_and_or_graph(computation_graph, ax, title="AND–OR computation graph"):
     # --- build AND–OR graph ---
     G = nx.DiGraph()
-    for out, recipes in computation_graph.recipes.items():
+    for out, recipes in computation_graph.ways.items():
         f_out = ("F", out)
         G.add_node(f_out, kind="field", label=out)
         for i, r in enumerate(recipes):
             r_node = ("R", out, i)
             G.add_node(r_node, kind="recipe", label=f"{out}#{i+1}")
             G.add_edge(f_out, r_node)
-            for dep in r["deps"]:
+            for dep in r["needs"]:
                 f_dep = ("F", dep)
                 G.add_node(f_dep, kind="field", label=dep)
                 G.add_edge(r_node, f_dep)
@@ -395,10 +395,10 @@ from matplotlib.patches import Circle, Wedge, FancyArrowPatch
 def plot_and_or_with_nubs(computation_graph, ax, title="AND–OR (recipes as nubs)"):
     # --- field-only graph for layout (deps -> out) ---
     DG = nx.DiGraph()
-    for out, recipes in computation_graph.recipes.items():
+    for out, recipes in computation_graph.ways.items():
         DG.add_node(out)
         for r in recipes:
-            for dep in r["deps"]:
+            for dep in r["needs"]:
                 DG.add_node(dep)
                 DG.add_edge(dep, out)
 
@@ -431,7 +431,7 @@ def plot_and_or_with_nubs(computation_graph, ax, title="AND–OR (recipes as nub
 
     # --- draw recipe nubs + edges ---
     # nub centers: spread along a line below the field circle
-    for out, recipes in computation_graph.recipes.items():
+    for out, recipes in computation_graph.ways.items():
         if out not in pos:
             continue
         x0, y0 = pos[out]
@@ -453,7 +453,7 @@ def plot_and_or_with_nubs(computation_graph, ax, title="AND–OR (recipes as nub
             ax.text(cx, cy - 0.35*nub_r, f"{i+1}", ha="center", va="center", fontsize=8)
 
             # edges from nub center to each dependency field
-            for dep in r["deps"]:
+            for dep in r["needs"]:
                 if dep not in pos:
                     continue
                 x1, y1 = pos[dep]
@@ -486,12 +486,12 @@ import networkx as nx
 def field_ordinal_levels(comp_graph, direction="out_to_dep"):
     # 1) field projection
     H = nx.DiGraph()
-    for out, recipes in comp_graph.recipes.items():
+    for out, recipes in comp_graph.ways.items():
         H.add_node(out)
         for r in recipes:
-            if not r["deps"]:
+            if not r["needs"]:
                 continue
-            for dep in r["deps"]:
+            for dep in r["needs"]:
                 H.add_node(dep)
                 if direction == "out_to_dep":
                     H.add_edge(out, dep)
@@ -536,13 +536,13 @@ def plot_and_or_graph_c(comp_graph, ax, title="Computation graph"):
     field_nodes = set()
     recipe_nodes = []
 
-    for out, recipes in comp_graph.recipes.items():
+    for out, recipes in comp_graph.ways.items():
         f_out = ("F", out)
         G.add_node(f_out, kind="field", label=str(out))
         field_nodes.add(f_out)
 
         for i, r in enumerate(recipes):
-            if not r["deps"]:
+            if not r["needs"]:
                 continue   # Skip loader recipes (no dependencies, no edges)
             r_node = ("R", out, i)
             G.add_node(r_node, kind="recipe", out=out, idx=i, label=f"{i+1}")
@@ -552,7 +552,7 @@ def plot_and_or_graph_c(comp_graph, ax, title="Computation graph"):
             G.add_edge(f_out, r_node, kind="alt")
 
             # AND edges: recipe -> deps
-            for dep in r["deps"]:
+            for dep in r["needs"]:
                 f_dep = ("F", dep)
                 G.add_node(f_dep, kind="field", label=str(dep))
                 field_nodes.add(f_dep)
@@ -604,7 +604,7 @@ def plot_and_or_graph_c(comp_graph, ax, title="Computation graph"):
     # place recipe nodes on a ring around the output field
     ring_r = 0.08
     ring_r = 30
-    for out, recipes in comp_graph.recipes.items():
+    for out, recipes in comp_graph.ways.items():
         f_out = ("F", out)
         if f_out not in pos:
             continue

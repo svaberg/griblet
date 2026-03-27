@@ -1,53 +1,52 @@
-import networkx as nx
 import matplotlib.pyplot as plt
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
-from griblet import ComputationGraph
-from griblet import DependencySolver
+from griblet import Graph, NoPathError
+from griblet.pathfinder import Pathfinder
 
-from room_demo import make_room_recipes_graph, RoomLoader
+from room_demo import RoomLoader, make_room_graph
 import plots
 
 
-def plot_networkx_graph(loader, recipes_graph, filename):
+def plot_networkx_graph(loader, ways_graph, filename):
     loader_graph = loader.as_graph()
-    computation_graph = ComputationGraph(loader_graph)
+    graph = Graph(loader_graph)
 
-    print(computation_graph)
+    print(graph)
     fig, ax = plt.subplots()
-    plots.plot_recipe_colored_edges_curved(computation_graph, ax=ax)
+    plots.plot_recipe_colored_edges_curved(graph, ax=ax)
     plt.savefig(filename + "_loader.png", dpi=150)
 
-    computation_graph.merge(recipes_graph)
-    print(computation_graph)
+    graph.merge(ways_graph)
+    print(graph)
     fig, ax = plt.subplots()
-    plots.plot_recipe_colored_edges_curved(computation_graph, ax=ax)
+    plots.plot_recipe_colored_edges_curved(graph, ax=ax)
     plt.savefig(filename + "_with_recipes.png", dpi=150)
 
-    # Use the solver 
-    solver = DependencySolver(computation_graph)
-    cost1, tree1 = solver.resolve_field('volume')
+    try:
+        cost1, path1 = Pathfinder(graph).find_path("volume")
 
-    # (Optionally) remove 'area' as a recipe or node, then resolve again
-    computation_graph.recipes.pop('area', None)
-    solver2 = DependencySolver(computation_graph)
-    cost2, tree2 = solver2.resolve_field('volume')
+        graph.ways.pop("area", None)
+        cost2, path2 = Pathfinder(graph).find_path("volume")
 
-    fig, ax = plt.subplots(figsize=(9, 7))
-    plots.plot_computation_paths(
-        computation_graph,
-        [tree1, tree2],  # list of tree roots
-        ax=ax,
-        labels=["Best path", "Path after removing area"],
-        title="Optimal computation paths before and after removing 'area'"
-    )
-    fig.tight_layout()
-    fig.savefig(filename + "_computation_paths.png", dpi=150)
+        fig, ax = plt.subplots(figsize=(9, 7))
+        plots.plot_computation_paths(
+            graph,
+            [path1, path2],
+            ax=ax,
+            labels=["Best path", "Path after removing area"],
+            title="Optimal computation paths before and after removing 'area'",
+        )
+        fig.tight_layout()
+        fig.savefig(filename + "_computation_paths.png", dpi=150)
+    except NoPathError as e:
+        print(f"Error during pathfinding: {e}")
 
 
 if __name__ == "__main__":
     loader = RoomLoader()
-    room_recipies_graph = make_room_recipes_graph()
-    plot_networkx_graph(loader, room_recipies_graph, "demo_networkx.png")
+    room_graph = make_room_graph()
+    plot_networkx_graph(loader, room_graph, "demo_networkx.png")
