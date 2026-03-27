@@ -11,7 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class FieldCache:
+class Cache:
     """
     Cache wrapper around a loader with a cached/uncached cost model.
 

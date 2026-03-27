@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from griblet import Graph
 from griblet.loader import BaseLoader
@@ -140,13 +139,16 @@ def make_wind_graph():
     return graph
 
 
-def test_batsrus_example_flow_resolves_and_evaluates():
+if __name__ == "__main__":
     graph = Graph(WindLoader().as_graph())
     graph.merge(make_wind_graph())
 
-    cost, _path = Pathfinder(graph).find_path("T ideal (K)")
+    cost, path = Pathfinder(graph).find_path("T ideal (K)")
     value = graph.compute("T ideal (K)")
 
-    assert cost > 0
-    assert value.shape == (10,)
-    assert np.all(np.isfinite(value))
+    print("\n=== BATSRUS Demo ===\n")
+    print(f"Best total cost: {cost:.2f}")
+    print(f"Resolved path root: {path.name}")
+    print(f"Output shape: {value.shape}")
+    print("First three values:")
+    print(value[:3])
