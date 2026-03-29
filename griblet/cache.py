@@ -52,11 +52,10 @@ class Cache:
         return self.cached_cost if field in self._cache else self.uncached_cost
 
     def __str__(self):
-        cached = ", ".join(sorted(self._cache)) or "-"
         return "\n".join([
             "Cache",
             f"  loader: {type(self.loader).__name__}",
             f"  uncached cost: {self.uncached_cost}",
             f"  cached cost: {self.cached_cost}",
-            f"  cached fields: {cached}",
+            f"  cached fields: {', '.join(sorted(self._cache)) or '-'}",
         ])
