@@ -24,7 +24,7 @@ def plot_networkx_graph(loader, ways_graph, filename, *, target="volume", rerout
     fig_width = max(9.0, fig_height)
 
     fig, ax = plt.subplots(figsize=(fig_width, fig_height))
-    plots.plot_and_or_graph_c(graph, ax=ax)
+    plots.plot_and_or_graph(graph, ax=ax)
     fig.subplots_adjust(left=0.02, right=0.98, bottom=0.02, top=0.94)
     fig.savefig(filename + "_with_recipes.png", dpi=150)
 

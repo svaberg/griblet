@@ -79,11 +79,6 @@ def test_plot_helpers_render_box_graph():
     path = Pathfinder(graph).find_path("volume")
 
     fig, ax = plt.subplots()
-    plots.plot_flattened_computation_graph(graph, ax=ax)
-    assert ax.has_data()
-    plt.close(fig)
-
-    fig, ax = plt.subplots()
     plots.plot_computation_paths(graph, [path], ax=ax)
     assert ax.has_data()
     plt.close(fig)

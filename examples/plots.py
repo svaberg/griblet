@@ -11,7 +11,6 @@ FIELD_EDGE_WIDTH = 2
 RECIPE_EDGE_WIDTH = 0
 OUT_EDGE_WIDTH = 4
 NEED_EDGE_WIDTH = 2.2
-PATH_EDGE_WIDTH = 3
 X_PADDING = 1.8
 Y_PADDING = 1.5
 
@@ -481,17 +480,6 @@ def _collect_path_display_nodes_edges(computation_graph, path):
     return nodes, edges
 
 
-def plot_flattened_computation_graph(
-    computation_graph,
-    ax,
-    title="Computation graph",
-    show_node_metadata=True,
-    pos=None,
-):
-    del show_node_metadata, pos
-    plot_and_or_graph(computation_graph, ax=ax, title=title)
-
-
 def plot_and_or_graph(computation_graph, ax, title="Computation graph"):
     graph = and_or_graph(computation_graph)
     recipe_colors = _recipe_color_map(graph)
@@ -504,10 +492,6 @@ def plot_and_or_graph(computation_graph, ax, title="Computation graph"):
         recipe_facecolors=recipe_colors,
     )
     return graph, pos
-
-
-def plot_and_or_graph_c(computation_graph, ax, title="Computation graph"):
-    return plot_and_or_graph(computation_graph, ax=ax, title=title)
 
 
 def plot_computation_paths(
