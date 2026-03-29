@@ -101,12 +101,8 @@ class Pathfinder:
             for need in needs:
                 try:
                     need_cost, need_path = self._find_path(need, trail)
-                except NoPathError:
-                    logger.debug("Need %s of %s raised NoPathError", need, target)
-                    fail = True
-                    break
-                except KeyError:
-                    logger.debug("Need %s of %s is unknown", need, target)
+                except (NoPathError, KeyError) as error:
+                    logger.debug("Need %s of %s failed: %s", need, target, error)
                     fail = True
                     break
                 if need_cost == float("inf") or need_path is None:
