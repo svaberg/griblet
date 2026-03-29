@@ -18,7 +18,6 @@ class BaseLoader:
     Subclasses provide loading logic, available fields, and access cost.
     """
     def __init__(self):
-        # By default, an empty _fields dict (can be overridden by subclass)
         self._fields = {}
 
     def load(self, field: str) -> Any:
@@ -70,7 +69,7 @@ class BlockLoader(BaseLoader):
         """
         super().__init__()
         self._fields = file_handle
-        self._cache = {}          # field -> value
+        self._cache = {}
         self._loaded = False
         self.load_cost = load_cost
         self.cached_cost = cached_cost
