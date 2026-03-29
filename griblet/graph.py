@@ -19,9 +19,6 @@ class Graph:
             self.merge(other_graph)
 
     def add(self, name, func, *, needs=None, cost=1.0, metadata=None):
-        """
-        Add one way to reach `name`.
-        """
         needs = tuple(needs or ())
         metadata = dict(metadata or {})
         self.ways.setdefault(name, []).append({
@@ -39,9 +36,6 @@ class Graph:
         )
 
     def merge(self, other):
-        """
-        Merge all ways from another Graph into this one.
-        """
         for name, ways in other.ways.items():
             self.ways.setdefault(name, []).extend(ways)
         logger.debug(
@@ -52,9 +46,6 @@ class Graph:
         return self
 
     def compute(self, name):
-        """
-        Follow the best path to `name` and return the result.
-        """
         from .pathfinder import Pathfinder, follow_path
 
         logger.info("Computing %s", name)
