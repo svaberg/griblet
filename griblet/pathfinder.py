@@ -104,9 +104,8 @@ class Pathfinder:
         best_cost = float("inf")
         best_step = None
         trail.add(target)
-        ways = self.graph.ways[target]
 
-        for i, way in enumerate(ways):
+        for i, way in enumerate(self.graph.ways[target]):
             needs = way["needs"]
             subpaths = []
             cost_val = _way_cost(way)
