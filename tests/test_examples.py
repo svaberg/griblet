@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 
 from griblet import NoPathError
-from griblet.pathfinder import Pathfinder
 
 from demo_batsrus import WindLoader, build_wind_graph, make_wind_graph
 from demo_networkx import plot_networkx_graph
@@ -16,7 +15,7 @@ import plots
 def test_demo_best_path_flow():
     graph = build_box_graph()
 
-    path = Pathfinder(graph).find_path("volume")
+    path = graph.path("volume")
 
     value = graph.compute("volume")
     value_second = graph.compute("volume")
@@ -29,11 +28,11 @@ def test_demo_best_path_flow():
 def test_demo_rerouting_flow():
     graph = build_box_graph()
 
-    path_1 = Pathfinder(graph).find_path("volume")
+    path_1 = graph.path("volume")
     value_1 = graph.compute("volume")
 
     graph.ways.pop("area", None)
-    path_2 = Pathfinder(graph).find_path("volume")
+    path_2 = graph.path("volume")
     value_2 = graph.compute("volume")
 
     graph.ways.pop("length", None)
@@ -43,7 +42,7 @@ def test_demo_rerouting_flow():
     assert path_2.cost > path_1.cost
 
     with pytest.raises(NoPathError):
-        Pathfinder(graph).find_path("volume")
+        graph.path("volume")
 
 
 def test_box_extra_fields():
@@ -59,7 +58,7 @@ def test_box_extra_fields():
 def test_batsrus_example_flow_resolves_and_evaluates():
     graph = build_wind_graph()
 
-    path = Pathfinder(graph).find_path("T ideal (K)")
+    path = graph.path("T ideal (K)")
     value = graph.compute("T ideal (K)")
 
     assert path.cost > 0
@@ -69,7 +68,7 @@ def test_batsrus_example_flow_resolves_and_evaluates():
 
 def test_plot_helpers_render_box_graph():
     graph = build_box_graph()
-    path = Pathfinder(graph).find_path("volume")
+    path = graph.path("volume")
 
     fig, ax = plt.subplots()
     plots.plot_computation_paths(graph, [path], ax=ax)

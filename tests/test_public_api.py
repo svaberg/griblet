@@ -6,7 +6,7 @@ from griblet import Graph, NoPathError
 from griblet.cache import Cache
 from griblet.loader import BaseLoader, BlockLoader
 from griblet.path import Path, Step
-from griblet.pathfinder import Pathfinder, explain_field, follow_path
+from griblet.pathfinder import Pathfinder
 
 
 class DemoLoader(BaseLoader):
@@ -55,6 +55,18 @@ def test_pathfinder_returns_path():
     assert graph.compute("y") == 3
 
 
+def test_graph_path_returns_path():
+    graph = Graph()
+    graph.add("x", lambda: 2, cost=1.0)
+    graph.add("y", lambda x: x + 1, needs=["x"], cost=2.0)
+
+    path = graph.path("y")
+
+    assert isinstance(path, Path)
+    assert path.cost == pytest.approx(3.0)
+    assert path.root.name == "y"
+
+
 def test_pathfinder_raises_keyerror_for_missing_targets():
     with pytest.raises(KeyError, match="missing"):
         Pathfinder(Graph()).find_path("missing")
@@ -63,6 +75,11 @@ def test_pathfinder_raises_keyerror_for_missing_targets():
 def test_graph_compute_raises_keyerror_for_missing_targets():
     with pytest.raises(KeyError, match="missing"):
         Graph().compute("missing")
+
+
+def test_graph_compute_raises_typeerror_for_invalid_targets():
+    with pytest.raises(TypeError, match="field name or a Path"):
+        Graph().compute(3)
 
 
 def test_graph_add_copies_metadata():
@@ -128,24 +145,24 @@ def test_pathfinder_raises_nopath_for_known_but_unreachable_target():
         Pathfinder(graph).find_path("y")
 
 
-def test_follow_path_records_actual_costs():
+def test_compute_path_records_actual_costs():
     graph = Graph()
     graph.add("x", lambda: 2, cost=1.0)
     graph.add("y", lambda x: x + 1, needs=["x"], cost=2.0)
 
-    path = Pathfinder(graph).find_path("y")
+    path = graph.path("y")
 
-    assert follow_path(path, graph) == 3
+    assert graph.compute(path) == 3
     assert path.root.last_actual_cost == pytest.approx(3.0)
     assert path.root.needs[0].last_actual_cost == pytest.approx(1.0)
 
 
-def test_explain_field_reports_total_cost_and_tree():
+def test_path_str_reports_total_cost_and_tree():
     graph = Graph()
     graph.add("x", lambda: 2, cost=1.0)
     graph.add("y", lambda x: x + 1, needs=["x"], cost=2.0)
 
-    explanation = explain_field(graph, "y")
+    explanation = str(graph.path("y"))
 
     assert explanation.startswith("Path to y (total cost: 3.0)\n")
     assert "y (cost: 2.0)" in explanation
@@ -222,6 +239,21 @@ def test_graph_compute_logs_compute_and_path_messages(caplog):
     assert "Computed y with total cost 3.0" in caplog.text
 
 
+def test_graph_compute_accepts_a_precomputed_path(caplog):
+    graph = Graph()
+    graph.add("x", lambda: 2, cost=1.0)
+    graph.add("y", lambda x: x + 1, needs=["x"], cost=2.0)
+    path = graph.path("y")
+
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        assert graph.compute(path) == 3
+
+    assert "Finding path to y" not in caplog.text
+    assert "Chosen path for y:" not in caplog.text
+    assert "Computing y" in caplog.text
+
+
 def test_cache_logs_miss_hit_and_bulk_load(caplog):
     cache = Cache(BulkCacheLoader(), uncached_cost=9.0, cached_cost=0.5)
 
@@ -258,16 +290,16 @@ def test_pathfinder_logs_failed_route_and_missing_path(caplog):
     assert "No path found to y" in caplog.text
 
 
-def test_follow_path_logs_cost_change(caplog):
+def test_compute_path_logs_cost_change(caplog):
     graph = Graph()
     cost = [1.0]
     graph.add("x", lambda: 2, cost=lambda: cost[0])
-    path = Pathfinder(graph).find_path("x")
+    path = graph.path("x")
 
     with caplog.at_level(logging.INFO):
-        assert follow_path(path, graph) == 2
+        assert graph.compute(path) == 2
         cost[0] = 2.0
-        assert follow_path(path, graph) == 2
+        assert graph.compute(path) == 2
 
     assert "Cost change for x: 1.0 -> 2.0" in caplog.text
 

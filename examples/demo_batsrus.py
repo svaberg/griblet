@@ -2,7 +2,6 @@ import numpy as np
 
 from griblet import Graph
 from griblet.loader import BaseLoader
-from griblet.pathfinder import Pathfinder
 
 _fallback_gamma = 5/3
 _mu_0 = 4e-7 * np.pi
@@ -146,7 +145,7 @@ def build_wind_graph():
 if __name__ == "__main__":
     graph = build_wind_graph()
 
-    path = Pathfinder(graph).find_path("T ideal (K)")
+    path = graph.path("T ideal (K)")
     value = graph.compute("T ideal (K)")
 
     print("\n=== BATSRUS Demo ===\n")

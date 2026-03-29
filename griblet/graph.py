@@ -4,6 +4,7 @@ Graph of ways to reach data.
 
 import logging
 
+from .path import Path
 
 logger = logging.getLogger(__name__)
 
@@ -73,9 +74,12 @@ class Graph:
         )
         return self
 
-    def compute(self, name):
+    def path(self, name):
         """
-        Resolve and evaluate the lowest-cost path to `name`.
+        Resolve and return the lowest-cost path to `name`.
+
+        The returned Path can be inspected, printed, or passed back to
+        `compute` for evaluation.
 
         Raises
         ------
@@ -84,13 +88,41 @@ class Graph:
         NoPathError
             If `name` is known, but none of its ways can be completed.
         """
-        from .pathfinder import Pathfinder, follow_path
+        from .pathfinder import Pathfinder
 
-        logger.info("Computing %s", name)
+        logger.info("Finding path to %s", name)
         path = Pathfinder(self).find_path(name)
         logger.debug("Chosen path for %s:\n%s", name, path)
+        return path
+
+    def compute(self, target):
+        """
+        Evaluate either a target name or a previously chosen Path.
+
+        Passing a name first resolves the lowest-cost path. Passing a Path uses
+        that exact path directly.
+
+        Raises
+        ------
+        KeyError
+            If a requested target name is unknown to the graph.
+        NoPathError
+            If a requested target name is known, but no valid path exists.
+        TypeError
+            If `target` is neither a name nor a Path.
+        """
+        from .pathfinder import follow_path
+
+        if isinstance(target, Path):
+            path = target
+        elif isinstance(target, str):
+            path = self.path(target)
+        else:
+            raise TypeError("compute() takes a field name or a Path")
+
+        logger.info("Computing %s", path.root.name)
         value = follow_path(path, self)
-        logger.info("Computed %s with total cost %s", name, path.cost)
+        logger.info("Computed %s with total cost %s", path.root.name, path.cost)
         return value
 
     def fields(self):

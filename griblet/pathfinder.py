@@ -30,16 +30,6 @@ def _way_cost(way):
     return cost() if callable(cost) else cost
 
 
-def explain_field(graph, target: str) -> str:
-    """
-    Return the chosen path to `target` in the same readable form as `Path.__str__`.
-
-    This is a convenience function for inspection and explanation.
-    """
-    logger.debug("Explaining path to %s", target)
-    return str(Pathfinder(graph).find_path(target))
-
-
 def follow_path(path: Path, graph):
     """
     Evaluate a resolved path and record the actual cost paid at each step.

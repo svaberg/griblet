@@ -6,7 +6,6 @@ logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 from griblet import Graph, NoPathError
-from griblet.pathfinder import Pathfinder
 
 from box_demo import BoxLoader, make_box_graph
 from demo_batsrus import WindLoader, make_wind_graph
@@ -29,12 +28,12 @@ def plot_networkx_graph(loader, ways_graph, filename, *, target="volume", rerout
     fig.savefig(filename + "_with_recipes.png", dpi=150)
 
     try:
-        path1 = Pathfinder(graph).find_path(target)
+        path1 = graph.path(target)
 
         rerouted_graph = Graph(loader.as_graph())
         rerouted_graph.merge(ways_graph)
         rerouted_graph.ways.pop(reroute_key, None)
-        path2 = Pathfinder(rerouted_graph).find_path(target)
+        path2 = rerouted_graph.path(target)
 
         fig, ax = plt.subplots(figsize=(fig_width, fig_height))
         plots.plot_computation_paths(
