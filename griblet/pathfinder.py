@@ -78,7 +78,6 @@ class Pathfinder:
             return float("inf"), None
 
         if target in self.memo:
-            logger.debug("Memo hit for %s: %s", target, self.memo[target])
             return self.memo[target]
 
         if target not in self.graph.ways:
