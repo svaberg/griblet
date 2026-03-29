@@ -9,18 +9,18 @@ from griblet.pathfinder import Pathfinder
 
 from demo_batsrus import WindLoader, make_wind_graph
 from demo_networkx import plot_networkx_graph
-from room_demo import RoomLoader, make_room_graph, ureg
+from box_demo import BoxLoader, make_box_graph, ureg
 import plots
 
 
-def build_room_graph():
-    graph = Graph(RoomLoader().as_graph())
-    graph.merge(make_room_graph())
+def build_box_graph():
+    graph = Graph(BoxLoader().as_graph())
+    graph.merge(make_box_graph())
     return graph
 
 
 def test_demo_best_path_flow():
-    graph = build_room_graph()
+    graph = build_box_graph()
 
     cost, path = Pathfinder(graph).find_path("volume")
 
@@ -33,7 +33,7 @@ def test_demo_best_path_flow():
 
 
 def test_demo_rerouting_flow():
-    graph = build_room_graph()
+    graph = build_box_graph()
 
     cost_1, _path_1 = Pathfinder(graph).find_path("volume")
     value_1 = graph.compute("volume")
@@ -52,6 +52,16 @@ def test_demo_rerouting_flow():
         Pathfinder(graph).find_path("volume")
 
 
+def test_box_extra_fields():
+    graph = build_box_graph()
+
+    base_perimeter = graph.compute("base_perimeter")
+    linear_size = graph.compute("linear_size")
+
+    assert base_perimeter.to(ureg.meter).magnitude == pytest.approx([18.0])
+    assert linear_size.to(ureg.meter).magnitude == pytest.approx([12.0])
+
+
 def test_batsrus_example_flow_resolves_and_evaluates():
     graph = Graph(WindLoader().as_graph())
     graph.merge(make_wind_graph())
@@ -64,8 +74,8 @@ def test_batsrus_example_flow_resolves_and_evaluates():
     assert np.all(np.isfinite(value))
 
 
-def test_plot_helpers_render_room_graph():
-    graph = build_room_graph()
+def test_plot_helpers_render_box_graph():
+    graph = build_box_graph()
     _, path = Pathfinder(graph).find_path("volume")
 
     fig, ax = plt.subplots()
@@ -86,10 +96,19 @@ def test_plot_helpers_render_room_graph():
 
 
 def test_demo_networkx_generates_expected_artifacts(tmp_path):
-    output_prefix = tmp_path / "demo_networkx.png"
+    output_prefix = tmp_path / "demo_networkx"
+    batsrus_prefix = tmp_path / "demo_batsrus_networkx"
 
-    plot_networkx_graph(RoomLoader(), make_room_graph(), str(output_prefix))
+    plot_networkx_graph(BoxLoader(), make_box_graph(), str(output_prefix))
+    plot_networkx_graph(
+        WindLoader(),
+        make_wind_graph(),
+        str(batsrus_prefix),
+        target="Ma (U/c_s)",
+        reroute_key="GAMMA",
+    )
 
-    assert (tmp_path / "demo_networkx.png_loader.png").exists()
-    assert (tmp_path / "demo_networkx.png_with_recipes.png").exists()
-    assert (tmp_path / "demo_networkx.png_computation_paths.png").exists()
+    assert (tmp_path / "demo_networkx_with_recipes.png").exists()
+    assert (tmp_path / "demo_networkx_computation_paths.png").exists()
+    assert (tmp_path / "demo_batsrus_networkx_with_recipes.png").exists()
+    assert (tmp_path / "demo_batsrus_networkx_computation_paths.png").exists()

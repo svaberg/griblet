@@ -1,7 +1,7 @@
 from griblet import Graph
 from griblet.pathfinder import Pathfinder
 
-from room_demo import RoomLoader, make_room_graph, ureg
+from box_demo import BoxLoader, make_box_graph, ureg
 
 
 def print_path(node, indent=0):
@@ -16,12 +16,12 @@ def print_path(node, indent=0):
         print_path(need, indent + 4)
 
 if __name__ == "__main__":
-    loader = RoomLoader()
+    loader = BoxLoader()
     graph = Graph(loader.as_graph())
-    graph.merge(make_room_graph())
+    graph.merge(make_box_graph())
     cost, path = Pathfinder(graph).find_path("volume")
 
-    print("\n=== Best Path Demo (Room Volume, multiple paths) ===\n")
+    print("\n=== Best Path Demo (Box Volume, multiple paths) ===\n")
     print(f"Best total cost: {cost:.2f}\nPath:")
     print_path(path)
 

@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import logging
+import math
 
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
@@ -7,46 +8,48 @@ logging.getLogger('matplotlib').setLevel(logging.WARNING)
 from griblet import Graph, NoPathError
 from griblet.pathfinder import Pathfinder
 
-from room_demo import RoomLoader, make_room_graph
+from box_demo import BoxLoader, make_box_graph
+from demo_batsrus import WindLoader, make_wind_graph
 import plots
 
 
-def plot_networkx_graph(loader, ways_graph, filename):
+def plot_networkx_graph(loader, ways_graph, filename, *, target="volume", reroute_key="area"):
     loader_graph = loader.as_graph()
     graph = Graph(loader_graph)
 
-    print(graph)
-    fig, ax = plt.subplots()
-    plots.plot_recipe_colored_edges_curved(graph, ax=ax)
-    plt.savefig(filename + "_loader.png", dpi=150)
-
     graph.merge(ways_graph)
     print(graph)
-    fig, ax = plt.subplots()
-    plots.plot_recipe_colored_edges_curved(graph, ax=ax)
-    plt.savefig(filename + "_with_recipes.png", dpi=150)
+    field_count = len(graph.fields())
+    fig_height = max(7.0, 1.8 * math.sqrt(field_count))
+    fig_width = max(9.0, fig_height)
+
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+    plots.plot_and_or_graph_c(graph, ax=ax)
+    fig.subplots_adjust(left=0.02, right=0.98, bottom=0.02, top=0.94)
+    fig.savefig(filename + "_with_recipes.png", dpi=150)
 
     try:
-        cost1, path1 = Pathfinder(graph).find_path("volume")
+        cost1, path1 = Pathfinder(graph).find_path(target)
 
-        graph.ways.pop("area", None)
-        cost2, path2 = Pathfinder(graph).find_path("volume")
+        rerouted_graph = Graph(loader.as_graph())
+        rerouted_graph.merge(ways_graph)
+        rerouted_graph.ways.pop(reroute_key, None)
+        cost2, path2 = Pathfinder(rerouted_graph).find_path(target)
 
-        fig, ax = plt.subplots(figsize=(9, 7))
+        fig, ax = plt.subplots(figsize=(fig_width, fig_height))
         plots.plot_computation_paths(
             graph,
             [path1, path2],
             ax=ax,
-            labels=["Best path", "Path after removing area"],
-            title="Optimal computation paths before and after removing 'area'",
+            labels=["Best path", f"Path after removing {reroute_key}"],
+            title=f"Optimal computation paths before and after removing {reroute_key!r}",
         )
-        fig.tight_layout()
+        fig.subplots_adjust(left=0.02, right=0.98, bottom=0.02, top=0.94)
         fig.savefig(filename + "_computation_paths.png", dpi=150)
     except NoPathError as e:
         print(f"Error during pathfinding: {e}")
 
 
 if __name__ == "__main__":
-    loader = RoomLoader()
-    room_graph = make_room_graph()
-    plot_networkx_graph(loader, room_graph, "demo_networkx.png")
+    plot_networkx_graph(BoxLoader(), make_box_graph(), "demo_networkx", target="volume", reroute_key="area")
+    plot_networkx_graph(WindLoader(), make_wind_graph(), "demo_batsrus_networkx", target="Ma (U/c_s)", reroute_key="GAMMA")

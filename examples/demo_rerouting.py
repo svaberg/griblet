@@ -5,13 +5,13 @@ logging.basicConfig(level=logging.INFO)
 from griblet import Graph, NoPathError
 from griblet.pathfinder import Pathfinder
 
-from room_demo import RoomLoader, make_room_graph
+from box_demo import BoxLoader, make_box_graph
 
 
 if __name__ == "__main__":
-    loader = RoomLoader()
+    loader = BoxLoader()
     graph = Graph(loader.as_graph())
-    graph.merge(make_room_graph())
+    graph.merge(make_box_graph())
 
     cost1, _path1 = Pathfinder(graph).find_path("volume")
     val1 = graph.compute("volume")

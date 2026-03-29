@@ -12,7 +12,7 @@ _boltzmann = 1.380649e-23
 
 class WindLoader(BaseLoader):
     """
-    Test loader, like the RoomLoader demo: primitives only, plain numpy.
+    Test loader, like the box demo: primitives only, plain numpy.
     Values here are placeholders just to make the graph runnable.
     """
     def __init__(self, n=10):
@@ -101,7 +101,7 @@ def make_wind_graph():
 
     # Other stuff
     def c_s_fallback(P, rho): return np.sqrt(_fallback_gamma * P / rho)
-    graph.add("c_s (m/s)", c_s_fallback, needs=["P (Pa)", "Rho (kg/m^3)"], cost=1.0)
+    graph.add("c_s (m/s)", c_s_fallback, needs=["P (Pa)", "Rho (kg/m^3)"], cost=1.2)
 
     def c_s_gamma(P, rho, GAMMA): return np.sqrt(GAMMA * P / rho)
     graph.add("c_s (m/s)", c_s_gamma, needs=["P (Pa)", "Rho (kg/m^3)", "GAMMA"], cost=1.0)
