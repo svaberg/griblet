@@ -443,10 +443,7 @@ def plot_computation_paths(
     labels=None,
     colors=None,
     title="Computation paths",
-    node_size=FIELD_NODE_SIZE,
-    font_size=FIELD_FONT_SIZE,
 ):
-    del node_size, font_size
     graph = and_or_graph(computation_graph)
     path_nodes_edges = [
         _collect_path_display_nodes_edges(computation_graph, tree)
