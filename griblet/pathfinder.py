@@ -105,7 +105,7 @@ class Pathfinder:
                     logger.debug("Need %s of %s failed: %s", need, target, error)
                     fail = True
                     break
-                if need_cost == float("inf") or need_path is None:
+                if need_path is None:
                     logger.debug("Need %s of %s failed", need, target)
                     fail = True
                     break
