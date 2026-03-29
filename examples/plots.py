@@ -152,14 +152,6 @@ def _labels_of_kind(graph, kind):
     }
 
 
-def _display_need_edges(graph, recipe_node):
-    return [(need_field, recipe_node) for _, need_field in graph.out_edges(recipe_node)]
-
-
-def _display_out_edge(recipe_node):
-    return [(recipe_node, ("F", recipe_node[1]))]
-
-
 def _draw_multicolor_edges(
     graph,
     pos,
@@ -356,7 +348,9 @@ def _draw_and_or_base(
         graph,
         pos,
         ax,
-        edge_builder=lambda recipe_node: _display_need_edges(graph, recipe_node),
+        edge_builder=lambda recipe_node: [
+            (need_field, recipe_node) for _, need_field in graph.out_edges(recipe_node)
+        ],
         recipe_colors=edge_recipe_colors,
         connectionstyle="arc3,rad=0.18",
         min_source_margin=20,
@@ -369,7 +363,7 @@ def _draw_and_or_base(
         graph,
         pos,
         ax,
-        edge_builder=_display_out_edge,
+        edge_builder=lambda recipe_node: [(recipe_node, ("F", recipe_node[1]))],
         recipe_colors=edge_recipe_colors,
         connectionstyle="arc3,rad=0.08",
         min_source_margin=10,
