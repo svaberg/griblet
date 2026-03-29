@@ -455,22 +455,22 @@ def plot_computation_paths(
     if labels is None:
         labels = [f"Path {index + 1}" for index in range(len(trees))]
 
-    recipe_to_paths = {recipe: set() for recipe in _sorted_recipe_nodes(graph)}
+    recipes = _sorted_recipe_nodes(graph)
+    recipe_to_paths = {recipe: set() for recipe in recipes}
+    highlighted_fields = set()
     for path_index, (nodes, _edges) in enumerate(path_nodes_edges):
         for node in nodes:
             if node[0] == "R":
                 recipe_to_paths[node].add(path_index)
-
-    highlighted_fields = set()
-    for nodes, _edges in path_nodes_edges:
-        highlighted_fields.update(node for node in nodes if node[0] == "F")
+            else:
+                highlighted_fields.add(node)
 
     shared_box_color = "#f1f1f1"
     displayed_recipe_colors = {}
     displayed_edge_colors = {}
     recipe_styles = {}
     has_shared_recipe = False
-    for recipe in _sorted_recipe_nodes(graph):
+    for recipe in recipes:
         path_membership = recipe_to_paths[recipe]
         if not path_membership:
             displayed_recipe_colors[recipe] = "#d9d9d9"
