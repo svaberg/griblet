@@ -394,7 +394,7 @@ def _draw_and_or_base(
     return graph, pos
 
 
-def _collect_path_display_nodes_edges(computation_graph, path):
+def _collect_path_display_nodes_edges(path):
     nodes = set()
     edges = set()
 
@@ -446,7 +446,7 @@ def plot_computation_paths(
 ):
     graph = and_or_graph(computation_graph)
     path_nodes_edges = [
-        _collect_path_display_nodes_edges(computation_graph, tree)
+        _collect_path_display_nodes_edges(tree)
         for tree in trees
     ]
 
