@@ -67,7 +67,7 @@ class BaseLoader:
         return graph
 
 
-class BlockLoader:
+class BlockLoader(BaseLoader):
     """
     Block-based loader with implicit caching.
 
@@ -99,14 +99,3 @@ class BlockLoader:
 
     def fields(self) -> List[str]:
         return list(self.file_handle.keys())
-
-    def as_graph(self) -> Graph:
-        graph = Graph()
-        for name in self.fields():
-            graph.add(
-                name,
-                lambda name=name: self.load(name),
-                cost=lambda name=name: self.cost(name),
-                metadata={"description": "BlockLoader"},
-            )
-        return graph
