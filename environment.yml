@@ -10,4 +10,5 @@ dependencies:
   - networkx
   - matplotlib
   - pytest
+  - pytest-cov
   - twine

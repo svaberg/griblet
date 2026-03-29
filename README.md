@@ -5,6 +5,7 @@
 </tr>
 </table>
 
+[![Version](https://img.shields.io/pypi/v/griblet)](https://pypi.org/project/griblet/) [![PyPI](https://img.shields.io/badge/PyPI-griblet-blue)](https://pypi.org/project/griblet/) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/0a9aa6e148d845a780466a718a1f96b6)](https://app.codacy.com/gh/svaberg/griblet/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![DOI](https://zenodo.org/badge/996606023.svg)](https://doi.org/10.5281/zenodo.19239863)
 
 **Carve computation trees from a burl of dependencies.**
 
