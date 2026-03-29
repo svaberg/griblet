@@ -12,23 +12,42 @@ logger = logging.getLogger(__name__)
 
 
 class NoPathError(Exception):
-    """Raised when a known target has no valid path through the graph."""
+    """
+    Raised when a known target has no valid path through the graph.
+
+    This is different from `KeyError`, which is used when the graph does not
+    know the requested target name at all.
+    """
 
 
 def _way_cost(way):
-    """Resolve a way cost stored as either a number or a zero-argument callable."""
+    """
+    Resolve a way cost stored as either a number or a zero-argument callable.
+
+    This keeps dynamic cost functions and fixed costs on the same footing.
+    """
     cost = way["cost"]
     return cost() if callable(cost) else cost
 
 
 def explain_field(graph, target: str) -> str:
-    """Return the chosen path to `target` in the same readable form as `Path.__str__`."""
+    """
+    Return the chosen path to `target` in the same readable form as `Path.__str__`.
+
+    This is a convenience function for inspection and explanation.
+    """
     logger.debug("Explaining path to %s", target)
     return str(Pathfinder(graph).find_path(target))
 
 
 def follow_path(path: Path, graph):
-    """Evaluate a resolved path and record the actual cost paid at each step."""
+    """
+    Evaluate a resolved path and record the actual cost paid at each step.
+
+    The returned value is the computed result at the root of the path. As the
+    path is followed, each step's `last_actual_cost` is updated with the cost
+    actually paid during that evaluation.
+    """
     def set_actual_cost(node: Step, actual_cost: float):
         prev = node.last_actual_cost
         node.last_actual_cost = actual_cost
@@ -65,6 +84,9 @@ def follow_path(path: Path, graph):
 class Pathfinder:
     """
     Search a graph for the lowest-cost path to a requested target.
+
+    The search memoizes subpaths by target name, so repeated subproblems are
+    only solved once per Pathfinder instance.
     """
 
     def __init__(self, graph):
@@ -86,7 +108,12 @@ class Pathfinder:
         target: str,
         trail: Optional[Set[str]] = None,
     ) -> Tuple[float, Optional[Step]]:
-        """Return the cheapest step tree for `target`, or fail if no path works."""
+        """
+        Return the cheapest step tree for `target`, or fail if no path works.
+
+        This is the recursive worker behind `find_path`, and it returns the
+        total cost together with the chosen root step.
+        """
         logger.debug("Searching for a path to %s", target)
         trail = set() if trail is None else trail
         if target in trail:
@@ -155,7 +182,16 @@ class Pathfinder:
         return best_cost, best_step
 
     def find_path(self, target: str) -> Path:
-        """Return the lowest-cost Path object that reaches `target`."""
+        """
+        Return the lowest-cost Path object that reaches `target`.
+
+        Raises
+        ------
+        KeyError
+            If the graph has no ways at all for `target`.
+        NoPathError
+            If the graph knows `target`, but every way to reach it fails.
+        """
         path = Path(*self._find_path(target))
         logger.info("Found path to %s with total cost %s", target, path.cost)
         return path

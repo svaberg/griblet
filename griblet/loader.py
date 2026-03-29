@@ -26,20 +26,35 @@ class BaseLoader:
         self._fields = {}
 
     def load(self, field: str) -> Any:
-        """Return one field directly from the loader's field mapping."""
+        """
+        Return one field directly from the loader's field mapping.
+
+        Subclasses can override this when loading is not a simple dictionary
+        lookup.
+        """
         if field not in self._fields:
             raise ValueError(f"Field '{field}' not found.")
         logger.debug("Loading %s from %s", field, type(self).__name__)
         return self._fields[field]
 
     def cost(self, field: str) -> float:
-        """Return the access cost for `field` in this loader."""
+        """
+        Return the access cost for `field` in this loader.
+
+        The base implementation uses a small fixed cost for all known fields.
+        """
         if field not in self._fields:
             raise ValueError(f"Field '{field}' not found.")
         return 0.1
 
     def as_graph(self, cost: Optional[Union[float, Any]] = None):
-        """Expose each field as a zero-need way in a new Graph."""
+        """
+        Expose each field as a zero-need way in a new Graph.
+
+        If `cost` is omitted, each graph way asks the loader for its current
+        field cost when evaluated. Passing a fixed `cost` overrides that
+        dynamic behavior for all exported fields.
+        """
         graph = Graph()
         logger.debug(
             "Exposing %d field(s) from %s as a graph",
@@ -77,7 +92,11 @@ class BlockLoader(BaseLoader):
     as a zero-need graph entry.
     """
     def __init__(self, file_handle: Dict[str, Any], load_cost=1.0, cached_cost=0.05):
-        """Store the backing mapping and the costs before and after the first load."""
+        """
+        Store the backing mapping and the costs before and after the first load.
+
+        `file_handle` is any mapping from field names to values.
+        """
         super().__init__()
         self._fields = file_handle
         self._cache = {}
@@ -86,7 +105,12 @@ class BlockLoader(BaseLoader):
         self.cached_cost = cached_cost
 
     def load(self, field: str) -> Any:
-        """Load the whole block on first access, then serve later requests from cache."""
+        """
+        Load the whole block on first access, then serve later requests from cache.
+
+        The first field request copies the whole backing mapping into the in-
+        memory cache.
+        """
         if not self._loaded:
             logger.info(
                 "Loading block for %s (%d field(s))",
@@ -100,7 +124,11 @@ class BlockLoader(BaseLoader):
         return self._cache[field]
 
     def cost(self, field: str) -> float:
-        """Return the pre-load or post-load access cost for `field`."""
+        """
+        Return the pre-load or post-load access cost for `field`.
+
+        This models expensive first access followed by cheap cached access.
+        """
         return self.cached_cost if self._loaded else self.load_cost
 
     def __str__(self):

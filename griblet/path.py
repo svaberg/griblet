@@ -10,6 +10,17 @@ from typing import Dict, List, Optional
 class Step:
     """
     One chosen derivation step inside a resolved path.
+
+    Attributes
+    ----------
+    name:
+        Name produced by this step.
+    cost:
+        Local cost of taking this step.
+    needs:
+        Child steps that must be evaluated first.
+    last_actual_cost:
+        Total cost actually paid the last time this step was followed.
     """
 
     name: str
@@ -21,7 +32,11 @@ class Step:
     last_actual_cost: Optional[float] = None
 
     def _format_lines(self, indent=0):
-        """Render this step and its dependencies as an indented tree of lines."""
+        """
+        Render this step and its dependencies as an indented tree of lines.
+
+        This is the internal formatter used by `__str__`.
+        """
         leaf = " [source]" if self.is_source else ""
         desc = self.metadata.get("description", "")
         unit = self.metadata.get("unit", "")
@@ -40,11 +55,22 @@ class Step:
 class Path:
     """
     A resolved path with its total cost and root step.
+
+    Attributes
+    ----------
+    cost:
+        Total cost of the chosen path.
+    root:
+        Root step producing the requested output.
     """
 
     cost: float
     root: Step
 
     def __str__(self):
-        """Return a readable summary of the full path and its total cost."""
+        """
+        Return a readable summary of the full path and its total cost.
+
+        The output starts with a one-line header and then shows the step tree.
+        """
         return f"Path to {self.root.name} (total cost: {self.cost})\n{self.root}"
