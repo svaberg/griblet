@@ -17,13 +17,12 @@ class Graph:
         """
         Add one way to reach `name`.
         """
-        way = {
+        self.ways.setdefault(name, []).append({
             "needs": tuple(needs or ()),
             "func": func,
             "cost": cost,
             "metadata": dict(metadata or {}),
-        }
-        self.ways.setdefault(name, []).append(way)
+        })
 
     def merge(self, other):
         """
