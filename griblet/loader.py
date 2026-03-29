@@ -7,7 +7,7 @@ Supports simple per-field loading and block-style bulk loading with caching.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from .graph import Graph
 
@@ -36,12 +36,6 @@ class BaseLoader:
         except KeyError:
             raise ValueError(f"Field '{field}' not found.")
 
-    def fields(self) -> List[str]:
-        """
-        Return a list of all available fields.
-        """
-        return list(self._fields.keys())
-
     def cost(self, field: str) -> float:
         """
         Return the cost of fetching the field. Subclasses can override.
@@ -56,7 +50,7 @@ class BaseLoader:
         Return a Graph with one source path for each field.
         """
         graph = Graph()
-        for name in self.fields():
+        for name in self._fields:
             way_cost = (lambda name=name: self.cost(name)) if cost is None else cost
             graph.add(
                 name,
