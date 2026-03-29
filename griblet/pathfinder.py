@@ -139,5 +139,4 @@ class Pathfinder:
         """
         Find the lowest-cost path to `target`.
         """
-        cost, root = self._find_path(target)
-        return Path(cost=cost, root=root)
+        return Path(*self._find_path(target))
