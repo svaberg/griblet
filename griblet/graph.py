@@ -49,9 +49,9 @@ class Graph:
         for name in sorted(self.ways):
             lines.append(f"{name}:")
             for i, way in enumerate(self.ways[name], 1):
-                cost_str = way["cost"] if isinstance(way["cost"], (int, float)) else "callable"
-                meta = way["metadata"] or {}
-                meta_str = ", ".join(f"{k}={v}" for k, v in meta.items())
+                cost = way["cost"]
+                cost_str = "callable" if callable(cost) else cost
+                meta_str = ", ".join(f"{k}={v}" for k, v in way["metadata"].items())
                 lines.append(
                     f"  Way {i}: needs={way['needs']}, cost={cost_str}"
                     + (f", meta={meta_str}" if meta_str else "")
