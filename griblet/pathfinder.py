@@ -15,6 +15,11 @@ class NoPathError(Exception):
     """Raised when no path can reach the requested data."""
 
 
+def _way_cost(way):
+    cost = way["cost"]
+    return cost() if callable(cost) else cost
+
+
 def explain_field(graph, target: str) -> str:
     """
     Return a readable explanation of the chosen path for `target`.
@@ -32,7 +37,7 @@ def follow_path(path: Path, graph):
             raise RuntimeError(f"No chosen way for {node.name}")
 
         way = graph.ways[node.name][node.way_index]
-        cost_val = way["cost"]() if callable(way["cost"]) else way["cost"]
+        cost_val = _way_cost(way)
 
         if node.is_source:
             prev = node.last_actual_cost
@@ -91,7 +96,7 @@ class Pathfinder:
             logger.debug("Trying way %s for %s: needs=%s desc=%r", i + 1, target, needs, desc)
             subpaths = []
             fail = False
-            cost_val = way["cost"]() if callable(way["cost"]) else way["cost"]
+            cost_val = _way_cost(way)
             total = cost_val
             for need in needs:
                 try:
