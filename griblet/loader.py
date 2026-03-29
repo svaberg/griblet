@@ -31,10 +31,9 @@ class BaseLoader:
         Load a field by name. By default, looks up in self._fields.
         Subclasses can override for custom loading logic.
         """
-        try:
-            return self._fields[field]
-        except KeyError:
+        if field not in self._fields:
             raise ValueError(f"Field '{field}' not found.")
+        return self._fields[field]
 
     def cost(self, field: str) -> float:
         """
