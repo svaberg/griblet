@@ -128,16 +128,12 @@ def _and_or_layout(computation_graph, graph):
     return pos
 
 
-def _field_nodes(graph):
-    return [node for node, data in graph.nodes(data=True) if data["kind"] == "field"]
-
-
-def _recipe_nodes(graph):
-    return [node for node, data in graph.nodes(data=True) if data["kind"] == "recipe"]
+def _nodes_of_kind(graph, kind):
+    return [node for node, data in graph.nodes(data=True) if data["kind"] == kind]
 
 
 def _sorted_recipe_nodes(graph):
-    return sorted(_recipe_nodes(graph), key=lambda node: (str(node[1]), node[2]))
+    return sorted(_nodes_of_kind(graph, "recipe"), key=lambda node: (str(node[1]), node[2]))
 
 
 def _recipe_color_map(graph):
@@ -148,19 +144,11 @@ def _recipe_color_map(graph):
     }
 
 
-def _field_labels(graph):
+def _labels_of_kind(graph, kind):
     return {
         node: data["label"]
         for node, data in graph.nodes(data=True)
-        if data["kind"] == "field"
-    }
-
-
-def _recipe_labels(graph):
-    return {
-        node: data["label"]
-        for node, data in graph.nodes(data=True)
-        if data["kind"] == "recipe"
+        if data["kind"] == kind
     }
 
 
@@ -277,7 +265,7 @@ def _draw_field_nodes(
     node_size=FIELD_NODE_SIZE,
 ):
     if nodelist is None:
-        nodelist = _field_nodes(graph)
+        nodelist = _nodes_of_kind(graph, "field")
     if not nodelist:
         return
     nx.draw_networkx_nodes(
@@ -324,7 +312,7 @@ def _draw_labels(graph, pos, ax):
     nx.draw_networkx_labels(
         graph,
         pos,
-        labels=_field_labels(graph),
+        labels=_labels_of_kind(graph, "field"),
         font_size=FIELD_FONT_SIZE,
         font_color="black",
         ax=ax,
@@ -332,7 +320,7 @@ def _draw_labels(graph, pos, ax):
     nx.draw_networkx_labels(
         graph,
         pos,
-        labels=_recipe_labels(graph),
+        labels=_labels_of_kind(graph, "recipe"),
         font_size=RECIPE_FONT_SIZE,
         font_color="black",
         ax=ax,
