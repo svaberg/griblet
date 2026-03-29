@@ -37,3 +37,7 @@ def make_box_graph():
     graph.add('volume', volume_from_lwh, needs=['length', 'width', 'height'], cost=3.0, metadata={'unit': ureg.meter**3})
 
     return graph
+
+
+def build_box_graph():
+    return Graph(BoxLoader().as_graph()).merge(make_box_graph())

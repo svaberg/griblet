@@ -1,12 +1,9 @@
-from griblet import Graph
 from griblet.pathfinder import Pathfinder
 
-from box_demo import BoxLoader, make_box_graph, ureg
+from box_demo import build_box_graph, ureg
 
 if __name__ == "__main__":
-    loader = BoxLoader()
-    graph = Graph(loader.as_graph())
-    graph.merge(make_box_graph())
+    graph = build_box_graph()
     path = Pathfinder(graph).find_path("volume")
 
     print("\n=== Best Path Demo (Box Volume, multiple paths) ===\n")

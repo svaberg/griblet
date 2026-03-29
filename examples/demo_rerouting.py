@@ -2,16 +2,14 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-from griblet import Graph, NoPathError
+from griblet import NoPathError
 from griblet.pathfinder import Pathfinder
 
-from box_demo import BoxLoader, make_box_graph
+from box_demo import build_box_graph
 
 
 if __name__ == "__main__":
-    loader = BoxLoader()
-    graph = Graph(loader.as_graph())
-    graph.merge(make_box_graph())
+    graph = build_box_graph()
 
     path1 = Pathfinder(graph).find_path("volume")
     val1 = graph.compute("volume")

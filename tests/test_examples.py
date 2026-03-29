@@ -9,14 +9,8 @@ from griblet.pathfinder import Pathfinder
 
 from demo_batsrus import WindLoader, make_wind_graph
 from demo_networkx import plot_networkx_graph
-from box_demo import BoxLoader, make_box_graph, ureg
+from box_demo import BoxLoader, build_box_graph, make_box_graph, ureg
 import plots
-
-
-def build_box_graph():
-    graph = Graph(BoxLoader().as_graph())
-    graph.merge(make_box_graph())
-    return graph
 
 
 def test_demo_best_path_flow():
