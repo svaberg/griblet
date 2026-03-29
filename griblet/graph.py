@@ -57,5 +57,3 @@ class Graph:
                     + (f", meta={meta_str}" if meta_str else "")
                 )
         return "\n".join(lines)
-
-    __repr__ = __str__
