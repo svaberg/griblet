@@ -5,14 +5,9 @@ Defines loader classes that expose externally stored field values as
 zero-need graph entries with associated access costs.
 Supports simple per-field loading and block-style bulk loading with caching.
 """
-
-import logging
 from typing import Any, Dict, Optional, Union
 
 from .graph import Graph
-
-
-logger = logging.getLogger(__name__)
 
 
 class BaseLoader:
@@ -82,7 +77,6 @@ class BlockLoader(BaseLoader):
 
     def load(self, field: str) -> Any:
         if not self._loaded:
-            logger.info("BlockLoader loading all fields in a single operation")
             self._cache = dict(self._fields)
             self._loaded = True
         return self._cache[field]
