@@ -29,12 +29,12 @@ def plot_networkx_graph(loader, ways_graph, filename, *, target="volume", rerout
     fig.savefig(filename + "_with_recipes.png", dpi=150)
 
     try:
-        cost1, path1 = Pathfinder(graph).find_path(target)
+        path1 = Pathfinder(graph).find_path(target)
 
         rerouted_graph = Graph(loader.as_graph())
         rerouted_graph.merge(ways_graph)
         rerouted_graph.ways.pop(reroute_key, None)
-        cost2, path2 = Pathfinder(rerouted_graph).find_path(target)
+        path2 = Pathfinder(rerouted_graph).find_path(target)
 
         fig, ax = plt.subplots(figsize=(fig_width, fig_height))
         plots.plot_computation_paths(

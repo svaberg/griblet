@@ -143,12 +143,12 @@ if __name__ == "__main__":
     graph = Graph(WindLoader().as_graph())
     graph.merge(make_wind_graph())
 
-    cost, path = Pathfinder(graph).find_path("T ideal (K)")
+    path = Pathfinder(graph).find_path("T ideal (K)")
     value = graph.compute("T ideal (K)")
 
     print("\n=== BATSRUS Demo ===\n")
-    print(f"Best total cost: {cost:.2f}")
-    print(f"Resolved path root: {path.name}")
+    print(f"Best total cost: {path.cost:.2f}")
+    print(f"Resolved path root: {path.root.name}")
     print(f"Output shape: {value.shape}")
     print("First three values:")
     print(value[:3])

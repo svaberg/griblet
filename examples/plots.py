@@ -477,7 +477,7 @@ def _collect_path_display_nodes_edges(computation_graph, path):
             edges.add((need_field, recipe_node))
             visit(need)
 
-    visit(path)
+    visit(path.root)
     return nodes, edges
 
 

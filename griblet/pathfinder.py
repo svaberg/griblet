@@ -5,7 +5,7 @@ Find and follow paths through a Graph.
 import logging
 from typing import Optional, Set, Tuple
 
-from .path import PathNode
+from .path import Path, Step
 
 
 logger = logging.getLogger(__name__)
@@ -19,10 +19,10 @@ def explain_field(graph, target: str) -> str:
     """
     Return a readable explanation of the chosen path for `target`.
     """
-    cost, path = Pathfinder(graph).find_path(target)
-    lines = [f"{target} total_cost={cost}"]
+    path = Pathfinder(graph).find_path(target)
+    lines = [f"{target} total_cost={path.cost}"]
 
-    def walk(node: PathNode, depth: int = 0) -> None:
+    def walk(node: Step, depth: int = 0) -> None:
         desc = (node.metadata or {}).get("description", "")
         parts = [node.name, f"(cost={node.cost})"]
         if desc:
@@ -31,43 +31,46 @@ def explain_field(graph, target: str) -> str:
         for need in node.needs:
             walk(need, depth + 1)
 
-    walk(path)
+    walk(path.root)
     return "\n".join(lines)
 
 
-def follow_path(node: PathNode, graph):
+def follow_path(path: Path, graph):
     """
     Follow a chosen path and return the computed result.
     """
-    if node.is_source:
+    def follow_step(node: Step):
+        if node.is_source:
+            for way in graph.ways[node.name]:
+                if not way["needs"]:
+                    cost_val = way["cost"]() if callable(way["cost"]) else way["cost"]
+                    break
+            else:
+                raise RuntimeError(f"No source way for {node.name}")
+            prev = node.last_actual_cost
+            node.last_actual_cost = cost_val
+            if prev is not None and prev != cost_val:
+                logger.info("Cost change for %s: %s -> %s", node.name, prev, cost_val)
+            return way["func"]()
+
+        values = [follow_step(need) for need in node.needs]
+        need_names = tuple(need.name for need in node.needs)
         for way in graph.ways[node.name]:
-            if not way["needs"]:
+            if need_names == way["needs"]:
                 cost_val = way["cost"]() if callable(way["cost"]) else way["cost"]
                 break
         else:
-            raise RuntimeError(f"No source way for {node.name}")
+            raise RuntimeError(f"No matching way for {node.name}")
+
+        child_cost = sum(need.last_actual_cost for need in node.needs)
+        total_cost = cost_val + child_cost
         prev = node.last_actual_cost
-        node.last_actual_cost = cost_val
-        if prev is not None and prev != cost_val:
-            logger.info("Cost change for %s: %s -> %s", node.name, prev, cost_val)
-        return way["func"]()
+        node.last_actual_cost = total_cost
+        if prev is not None and prev != total_cost:
+            logger.info("Cost change for %s: %s -> %s", node.name, prev, total_cost)
+        return way["func"](*values)
 
-    values = [follow_path(need, graph) for need in node.needs]
-    need_names = tuple(need.name for need in node.needs)
-    for way in graph.ways[node.name]:
-        if need_names == way["needs"]:
-            cost_val = way["cost"]() if callable(way["cost"]) else way["cost"]
-            break
-    else:
-        raise RuntimeError(f"No matching way for {node.name}")
-
-    child_cost = sum(need.last_actual_cost for need in node.needs)
-    total_cost = cost_val + child_cost
-    prev = node.last_actual_cost
-    node.last_actual_cost = total_cost
-    if prev is not None and prev != total_cost:
-        logger.info("Cost change for %s: %s -> %s", node.name, prev, total_cost)
-    return way["func"](*values)
+    return follow_step(path.root)
 
 
 class Pathfinder:
@@ -83,7 +86,7 @@ class Pathfinder:
         self,
         target: str,
         trail: Optional[Set[str]] = None,
-    ) -> Tuple[float, Optional[PathNode]]:
+    ) -> Tuple[float, Optional[Step]]:
         if trail is None:
             trail = set()
         if target in trail:
@@ -94,12 +97,14 @@ class Pathfinder:
             logger.debug("Memo hit for %s: %s", target, self.memo[target])
             return self.memo[target]
 
+        if target not in self.graph.ways:
+            logger.warning("Unknown field %s", target)
+            raise KeyError(target)
+
         best_cost = float("inf")
-        best_path = None
+        best_step = None
         trail.add(target)
-        ways = self.graph.ways.get(target, [])
-        if not ways:
-            logger.debug("No ways found for %s", target)
+        ways = self.graph.ways[target]
 
         for i, way in enumerate(ways):
             needs = way["needs"]
@@ -116,6 +121,10 @@ class Pathfinder:
                     logger.debug("Need %s of %s raised NoPathError", need, target)
                     fail = True
                     break
+                except KeyError:
+                    logger.debug("Need %s of %s is unknown", need, target)
+                    fail = True
+                    break
                 if need_cost == float("inf") or need_path is None:
                     logger.debug("Need %s of %s failed", need, target)
                     fail = True
@@ -130,7 +139,7 @@ class Pathfinder:
             logger.debug("Way %s for %s succeeded, total cost=%s", i + 1, target, total)
             if total < best_cost:
                 best_cost = total
-                best_path = PathNode(
+                best_step = Step(
                     name=target,
                     cost=cost_val,
                     is_source=(len(needs) == 0),
@@ -140,25 +149,18 @@ class Pathfinder:
 
         trail.remove(target)
 
-        if best_path is None:
+        if best_step is None:
             logger.warning("Cannot find path to %s", target)
-            missing = [way["needs"] for way in self.graph.ways.get(target, []) if way["needs"]]
-            if not self.graph.ways.get(target, []):
-                msg = f"No path to {target} (no ways at all)."
-            else:
-                msg = f"No path to {target} (all ways failed; needs tried: {missing})."
             self.memo[target] = (float("inf"), None)
-            raise NoPathError(msg)
+            raise NoPathError(f"No path to {target}.")
 
-        self.memo[target] = (best_cost, best_path)
+        self.memo[target] = (best_cost, best_step)
         logger.debug("Found path to %s with cost=%s", target, best_cost)
-        return best_cost, best_path
+        return best_cost, best_step
 
-    def find_path(self, target: str) -> Tuple[float, PathNode]:
+    def find_path(self, target: str) -> Path:
         """
         Find the lowest-cost path to `target`.
         """
-        cost, path = self._find_path(target)
-        if path is None:
-            raise NoPathError(f"No path to {target}.")
-        return cost, path
+        cost, root = self._find_path(target)
+        return Path(cost=cost, root=root)

@@ -19,11 +19,11 @@ if __name__ == "__main__":
     loader = BoxLoader()
     graph = Graph(loader.as_graph())
     graph.merge(make_box_graph())
-    cost, path = Pathfinder(graph).find_path("volume")
+    path = Pathfinder(graph).find_path("volume")
 
     print("\n=== Best Path Demo (Box Volume, multiple paths) ===\n")
-    print(f"Best total cost: {cost:.2f}\nPath:")
-    print_path(path)
+    print(f"Best total cost: {path.cost:.2f}\nPath:")
+    print_path(path.root)
 
     print("\nFirst evaluation:")
     vol_value = graph.compute("volume")

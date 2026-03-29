@@ -7,15 +7,15 @@ from typing import Dict, List, Optional
 
 
 @dataclass
-class PathNode:
+class Step:
     """
-    One node in a chosen path.
+    One step in a chosen path.
     """
 
     name: str
     cost: float
     is_source: bool = False
-    needs: List["PathNode"] = field(default_factory=list)
+    needs: List["Step"] = field(default_factory=list)
     metadata: Dict = field(default_factory=dict)
     last_actual_cost: Optional[float] = None
 
@@ -40,4 +40,20 @@ class PathNode:
         return "\n".join(self._format_lines())
 
     def __repr__(self):
-        return f"PathNode(name={self.name!r}, cost={self.cost!r}, needs={len(self.needs)})"
+        return f"Step(name={self.name!r}, cost={self.cost!r}, needs={len(self.needs)})"
+
+
+@dataclass
+class Path:
+    """
+    A chosen path through the graph.
+    """
+
+    cost: float
+    root: Step
+
+    def __str__(self):
+        return str(self.root)
+
+    def __repr__(self):
+        return f"Path(cost={self.cost!r}, root={self.root!r})"

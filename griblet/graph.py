@@ -39,7 +39,7 @@ class Graph:
         """
         from .pathfinder import Pathfinder, follow_path
 
-        _, path = Pathfinder(self).find_path(name)
+        path = Pathfinder(self).find_path(name)
         return follow_path(path, self)
 
     def fields(self):

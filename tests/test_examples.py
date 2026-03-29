@@ -22,12 +22,12 @@ def build_box_graph():
 def test_demo_best_path_flow():
     graph = build_box_graph()
 
-    cost, path = Pathfinder(graph).find_path("volume")
+    path = Pathfinder(graph).find_path("volume")
 
     value = graph.compute("volume")
     value_second = graph.compute("volume")
 
-    assert cost == pytest.approx(2.2)
+    assert path.cost == pytest.approx(2.2)
     assert value.to(ureg.meter**3).magnitude == pytest.approx([60.0])
     assert value_second.to(ureg.meter**3).magnitude == pytest.approx([60.0])
 
@@ -35,18 +35,18 @@ def test_demo_best_path_flow():
 def test_demo_rerouting_flow():
     graph = build_box_graph()
 
-    cost_1, _path_1 = Pathfinder(graph).find_path("volume")
+    path_1 = Pathfinder(graph).find_path("volume")
     value_1 = graph.compute("volume")
 
     graph.ways.pop("area", None)
-    cost_2, _path_2 = Pathfinder(graph).find_path("volume")
+    path_2 = Pathfinder(graph).find_path("volume")
     value_2 = graph.compute("volume")
 
     graph.ways.pop("length", None)
 
     assert value_1.to(ureg.meter**3).magnitude == pytest.approx([60.0])
     assert value_2.to(ureg.meter**3).magnitude == pytest.approx([60.0])
-    assert cost_2 > cost_1
+    assert path_2.cost > path_1.cost
 
     with pytest.raises(NoPathError):
         Pathfinder(graph).find_path("volume")
@@ -66,17 +66,17 @@ def test_batsrus_example_flow_resolves_and_evaluates():
     graph = Graph(WindLoader().as_graph())
     graph.merge(make_wind_graph())
 
-    cost, _path = Pathfinder(graph).find_path("T ideal (K)")
+    path = Pathfinder(graph).find_path("T ideal (K)")
     value = graph.compute("T ideal (K)")
 
-    assert cost > 0
+    assert path.cost > 0
     assert value.shape == (10,)
     assert np.all(np.isfinite(value))
 
 
 def test_plot_helpers_render_box_graph():
     graph = build_box_graph()
-    _, path = Pathfinder(graph).find_path("volume")
+    path = Pathfinder(graph).find_path("volume")
 
     fig, ax = plt.subplots()
     plots.plot_flattened_computation_graph(graph, ax=ax)
