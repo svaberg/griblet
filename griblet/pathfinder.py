@@ -21,17 +21,11 @@ def _way_cost(way):
 
 
 def explain_field(graph, target: str) -> str:
-    """
-    Return a readable explanation of the chosen path for `target`.
-    """
     logger.debug("Explaining path to %s", target)
     return str(Pathfinder(graph).find_path(target))
 
 
 def follow_path(path: Path, graph):
-    """
-    Follow a chosen path and return the computed result.
-    """
     def set_actual_cost(node: Step, actual_cost: float):
         prev = node.last_actual_cost
         node.last_actual_cost = actual_cost
@@ -155,9 +149,6 @@ class Pathfinder:
         return best_cost, best_step
 
     def find_path(self, target: str) -> Path:
-        """
-        Find the lowest-cost path to `target`.
-        """
         path = Path(*self._find_path(target))
         logger.info("Found path to %s with total cost %s", target, path.cost)
         return path
