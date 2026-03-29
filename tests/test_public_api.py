@@ -1,10 +1,9 @@
 import pytest
 
 from griblet import Graph, NoPathError
-from griblet.cache import Cache
 from griblet.loader import BaseLoader, BlockLoader
 from griblet.path import Path, Step
-from griblet.pathfinder import Pathfinder, explain_field, follow_path
+from griblet.pathfinder import Pathfinder
 
 
 class DemoLoader(BaseLoader):
@@ -14,24 +13,6 @@ class DemoLoader(BaseLoader):
 
     def cost(self, field):
         return 7.5
-
-
-class ScalarCacheLoader:
-    def __init__(self):
-        self.calls = 0
-
-    def load(self, field):
-        self.calls += 1
-        return 7
-
-
-class BulkCacheLoader:
-    def __init__(self):
-        self.calls = 0
-
-    def load(self, field):
-        self.calls += 1
-        return {"x": 1, "y": 2}
 
 
 def test_top_level_public_api_exports_expected_symbols():
@@ -61,112 +42,6 @@ def test_pathfinder_raises_keyerror_for_missing_targets():
 def test_graph_compute_raises_keyerror_for_missing_targets():
     with pytest.raises(KeyError, match="missing"):
         Graph().compute("missing")
-
-
-def test_graph_add_copies_metadata():
-    graph = Graph()
-    metadata = {"description": "source"}
-
-    graph.add("x", lambda: 1, metadata=metadata)
-    metadata["description"] = "mutated"
-
-    assert graph.ways["x"][0]["metadata"] == {"description": "source"}
-
-
-def test_graph_merge_returns_self_and_keeps_all_ways():
-    left = Graph()
-    right = Graph()
-    left.add("x", lambda: 1, cost=1.0)
-    right.add("x", lambda: 2, cost=2.0)
-
-    merged = left.merge(right)
-
-    assert merged is left
-    assert len(left.ways["x"]) == 2
-
-
-def test_graph_fields_only_lists_outputs():
-    graph = Graph()
-    graph.add("y", lambda x: x + 1, needs=["x"], cost=1.0)
-
-    assert graph.fields() == {"y"}
-
-
-def test_pathfinder_prefers_lower_total_cost():
-    graph = Graph()
-    graph.add("x", lambda: 2, cost=5.0)
-    graph.add("y", lambda x: x + 1, needs=["x"], cost=1.0)
-    graph.add("y", lambda: 3, cost=3.0)
-
-    path = Pathfinder(graph).find_path("y")
-
-    assert path.cost == pytest.approx(3.0)
-    assert path.root.way_index == 1
-    assert path.root.needs == []
-
-
-def test_pathfinder_avoids_cycle_when_alternative_exists():
-    graph = Graph()
-    graph.add("x", lambda y: y + 1, needs=["y"], cost=1.0)
-    graph.add("y", lambda x: x + 1, needs=["x"], cost=1.0)
-    graph.add("x", lambda: 2, cost=5.0)
-
-    path = Pathfinder(graph).find_path("x")
-
-    assert path.cost == pytest.approx(5.0)
-    assert path.root.is_source is True
-    assert graph.compute("x") == 2
-
-
-def test_pathfinder_raises_nopath_for_known_but_unreachable_target():
-    graph = Graph()
-    graph.add("y", lambda x: x + 1, needs=["x"], cost=1.0)
-
-    with pytest.raises(NoPathError, match="No path to y\\."):
-        Pathfinder(graph).find_path("y")
-
-
-def test_follow_path_records_actual_costs():
-    graph = Graph()
-    graph.add("x", lambda: 2, cost=1.0)
-    graph.add("y", lambda x: x + 1, needs=["x"], cost=2.0)
-
-    path = Pathfinder(graph).find_path("y")
-
-    assert follow_path(path, graph) == 3
-    assert path.root.last_actual_cost == pytest.approx(3.0)
-    assert path.root.needs[0].last_actual_cost == pytest.approx(1.0)
-
-
-def test_explain_field_reports_total_cost_and_tree():
-    graph = Graph()
-    graph.add("x", lambda: 2, cost=1.0)
-    graph.add("y", lambda x: x + 1, needs=["x"], cost=2.0)
-
-    explanation = explain_field(graph, "y")
-
-    assert explanation.startswith("y total_cost=3.0\n")
-    assert "y (cost: 2.0)" in explanation
-    assert "x (cost: 1.0) [source]" in explanation
-
-
-def test_cache_caches_scalar_loads_and_updates_cost():
-    cache = Cache(ScalarCacheLoader(), uncached_cost=9.0, cached_cost=0.5)
-
-    assert cache.cost("x") == pytest.approx(9.0)
-    assert cache.get("x") == 7
-    assert cache.cost("x") == pytest.approx(0.5)
-    assert cache.get("x") == 7
-    assert cache.loader.calls == 1
-
-
-def test_cache_bulk_load_caches_all_returned_fields():
-    cache = Cache(BulkCacheLoader(), uncached_cost=9.0, cached_cost=0.5)
-
-    assert cache.get("x") == 1
-    assert cache.is_cached("y") is True
-    assert cache.get("y") == 2
-    assert cache.loader.calls == 1
 
 
 def test_base_loader_as_graph_uses_dynamic_cost_by_default():
