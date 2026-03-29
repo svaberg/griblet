@@ -33,9 +33,6 @@ class Step:
     def __str__(self):
         return "\n".join(self._format_lines())
 
-    def __repr__(self):
-        return f"Step(name={self.name!r}, cost={self.cost!r}, way_index={self.way_index!r}, needs={len(self.needs)})"
-
 
 @dataclass
 class Path:
