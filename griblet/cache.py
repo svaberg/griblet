@@ -38,10 +38,3 @@ class Cache:
 
     def cost(self, field):
         return self.cached_cost if field in self._cache else self.uncached_cost
-
-    def remove(self, field):
-        if field in self._cache:
-            del self._cache[field]
-            logger.info("Removed %s from cache", field)
-        else:
-            logger.info("%s not in cache; nothing to remove", field)
