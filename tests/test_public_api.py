@@ -164,7 +164,7 @@ def test_cache_bulk_load_caches_all_returned_fields():
     cache = Cache(BulkCacheLoader(), uncached_cost=9.0, cached_cost=0.5)
 
     assert cache.get("x") == 1
-    assert cache.is_cached("y") is True
+    assert cache.cost("y") == pytest.approx(0.5)
     assert cache.get("y") == 2
     assert cache.loader.calls == 1
 

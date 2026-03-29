@@ -36,11 +36,8 @@ class Cache:
             raise KeyError(f"Field {field} not found in loaded data")
         return loaded_fields[field]
 
-    def is_cached(self, field):
-        return field in self._cache
-
     def cost(self, field):
-        return self.cached_cost if self.is_cached(field) else self.uncached_cost
+        return self.cached_cost if field in self._cache else self.uncached_cost
 
     def remove(self, field):
         if field in self._cache:
