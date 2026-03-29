@@ -39,10 +39,9 @@ class BaseLoader:
         """
         Return the cost of fetching the field. Subclasses can override.
         """
-        if field in self._fields:
-            return 0.1  # Default "load cost"
-        else:
+        if field not in self._fields:
             raise ValueError(f"Field '{field}' not found.")
+        return 0.1
 
     def as_graph(self, cost: Optional[Union[float, Any]] = None):
         """
