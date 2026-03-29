@@ -3,18 +3,6 @@ from griblet.pathfinder import Pathfinder
 
 from box_demo import BoxLoader, make_box_graph, ureg
 
-
-def print_path(node, indent=0):
-    if node is None:
-        print(" " * indent + "(unresolvable)")
-        return
-    leaf = " [source]" if getattr(node, "is_source", False) else ""
-    desc = getattr(node, "metadata", {}).get("description", "")
-    unit = getattr(node, "metadata", {}).get("unit", "")
-    print(" " * indent + f"{node.name} (cost: {node.cost}){leaf} {desc} {unit}")
-    for need in getattr(node, "needs", []):
-        print_path(need, indent + 4)
-
 if __name__ == "__main__":
     loader = BoxLoader()
     graph = Graph(loader.as_graph())
@@ -23,7 +11,7 @@ if __name__ == "__main__":
 
     print("\n=== Best Path Demo (Box Volume, multiple paths) ===\n")
     print(f"Best total cost: {path.cost:.2f}\nPath:")
-    print_path(path.root)
+    print(path)
 
     print("\nFirst evaluation:")
     vol_value = graph.compute("volume")

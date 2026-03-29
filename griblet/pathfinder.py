@@ -20,19 +20,7 @@ def explain_field(graph, target: str) -> str:
     Return a readable explanation of the chosen path for `target`.
     """
     path = Pathfinder(graph).find_path(target)
-    lines = [f"{target} total_cost={path.cost}"]
-
-    def walk(node: Step, depth: int = 0) -> None:
-        desc = (node.metadata or {}).get("description", "")
-        parts = [node.name, f"(cost={node.cost})"]
-        if desc:
-            parts.append(f"- {desc}")
-        lines.append("  " * depth + " ".join(parts))
-        for need in node.needs:
-            walk(need, depth + 1)
-
-    walk(path.root)
-    return "\n".join(lines)
+    return f"{target} total_cost={path.cost}\n{path}"
 
 
 def follow_path(path: Path, graph):

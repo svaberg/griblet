@@ -19,21 +19,14 @@ class Step:
     metadata: Dict = field(default_factory=dict)
     last_actual_cost: Optional[float] = None
 
-    def _format_lines(self, indent=0, show_costs=True, show_actual=True):
+    def _format_lines(self, indent=0):
         leaf = " [source]" if self.is_source else ""
         desc = self.metadata.get("description", "")
         unit = self.metadata.get("unit", "")
-        planned = f"planned: {self.cost}" if show_costs else ""
-        actual = (
-            f" actual: {self.last_actual_cost}" if show_actual and self.last_actual_cost is not None else ""
-        )
-        paren = ""
-        if planned or actual:
-            paren = "(" + planned + actual + ")"
-        line = " " * indent + f"{self.name} {paren}{leaf} {desc} {unit}".rstrip()
+        line = " " * indent + f"{self.name} (cost: {self.cost}){leaf} {desc} {unit}".rstrip()
         lines = [line]
         for need in self.needs:
-            lines.extend(need._format_lines(indent + 4, show_costs=show_costs, show_actual=show_actual))
+            lines.extend(need._format_lines(indent + 4))
         return lines
 
     def __str__(self):
