@@ -95,7 +95,6 @@ class Pathfinder:
             desc = way.get("metadata", {}).get("description", "")
             logger.debug("Trying way %s for %s: needs=%s desc=%r", i + 1, target, needs, desc)
             subpaths = []
-            fail = False
             cost_val = _way_cost(way)
             total = cost_val
             for need in needs:
@@ -103,30 +102,27 @@ class Pathfinder:
                     need_cost, need_path = self._find_path(need, trail)
                 except (NoPathError, KeyError) as error:
                     logger.debug("Need %s of %s failed: %s", need, target, error)
-                    fail = True
                     break
                 if need_path is None:
                     logger.debug("Need %s of %s failed", need, target)
-                    fail = True
                     break
                 total += need_cost
                 subpaths.append(need_path)
-
-            if fail:
-                logger.debug("Way %s for %s failed", i + 1, target)
+            else:
+                logger.debug("Way %s for %s succeeded, total cost=%s", i + 1, target, total)
+                if total < best_cost:
+                    best_cost = total
+                    best_step = Step(
+                        name=target,
+                        cost=cost_val,
+                        way_index=i,
+                        is_source=(len(needs) == 0),
+                        needs=subpaths,
+                        metadata=way.get("metadata", {}),
+                    )
                 continue
 
-            logger.debug("Way %s for %s succeeded, total cost=%s", i + 1, target, total)
-            if total < best_cost:
-                best_cost = total
-                best_step = Step(
-                    name=target,
-                    cost=cost_val,
-                    way_index=i,
-                    is_source=(len(needs) == 0),
-                    needs=subpaths,
-                    metadata=way.get("metadata", {}),
-                )
+            logger.debug("Way %s for %s failed", i + 1, target)
 
         trail.remove(target)
 
