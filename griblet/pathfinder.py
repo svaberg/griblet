@@ -88,8 +88,7 @@ class Pathfinder:
         trail: Optional[Set[str]] = None,
     ) -> Tuple[float, Optional[Step]]:
         logger.debug("Searching for a path to %s", target)
-        if trail is None:
-            trail = set()
+        trail = set() if trail is None else trail
         if target in trail:
             logger.debug("Cycle encountered while searching for %s", target)
             return float("inf"), None
