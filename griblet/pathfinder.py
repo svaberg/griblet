@@ -28,13 +28,13 @@ def follow_path(path: Path, graph):
     Follow a chosen path and return the computed result.
     """
     def follow_step(node: Step):
+        if node.way_index is None:
+            raise RuntimeError(f"No chosen way for {node.name}")
+
+        way = graph.ways[node.name][node.way_index]
+        cost_val = way["cost"]() if callable(way["cost"]) else way["cost"]
+
         if node.is_source:
-            for way in graph.ways[node.name]:
-                if not way["needs"]:
-                    cost_val = way["cost"]() if callable(way["cost"]) else way["cost"]
-                    break
-            else:
-                raise RuntimeError(f"No source way for {node.name}")
             prev = node.last_actual_cost
             node.last_actual_cost = cost_val
             if prev is not None and prev != cost_val:
@@ -42,16 +42,7 @@ def follow_path(path: Path, graph):
             return way["func"]()
 
         values = [follow_step(need) for need in node.needs]
-        need_names = tuple(need.name for need in node.needs)
-        for way in graph.ways[node.name]:
-            if need_names == way["needs"]:
-                cost_val = way["cost"]() if callable(way["cost"]) else way["cost"]
-                break
-        else:
-            raise RuntimeError(f"No matching way for {node.name}")
-
-        child_cost = sum(need.last_actual_cost for need in node.needs)
-        total_cost = cost_val + child_cost
+        total_cost = cost_val + sum(need.last_actual_cost for need in node.needs)
         prev = node.last_actual_cost
         node.last_actual_cost = total_cost
         if prev is not None and prev != total_cost:
@@ -130,6 +121,7 @@ class Pathfinder:
                 best_step = Step(
                     name=target,
                     cost=cost_val,
+                    way_index=i,
                     is_source=(len(needs) == 0),
                     needs=subpaths,
                     metadata=way.get("metadata", {}),

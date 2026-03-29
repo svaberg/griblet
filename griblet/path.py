@@ -14,6 +14,7 @@ class Step:
 
     name: str
     cost: float
+    way_index: Optional[int] = None
     is_source: bool = False
     needs: List["Step"] = field(default_factory=list)
     metadata: Dict = field(default_factory=dict)
@@ -33,7 +34,7 @@ class Step:
         return "\n".join(self._format_lines())
 
     def __repr__(self):
-        return f"Step(name={self.name!r}, cost={self.cost!r}, needs={len(self.needs)})"
+        return f"Step(name={self.name!r}, cost={self.cost!r}, way_index={self.way_index!r}, needs={len(self.needs)})"
 
 
 @dataclass

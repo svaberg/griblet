@@ -423,17 +423,10 @@ def _collect_path_display_nodes_edges(computation_graph, path):
         if node.is_source or not node.needs:
             return
 
-        need_names = tuple(need.name for need in node.needs)
-        recipe_index = None
-        for index, way in enumerate(computation_graph.ways[node.name]):
-            if tuple(way["needs"]) == need_names:
-                recipe_index = index
-                break
+        if node.way_index is None:
+            raise RuntimeError(f"No chosen way for path node {node.name!r}")
 
-        if recipe_index is None:
-            raise RuntimeError(f"No AND/OR recipe match for path node {node.name!r}")
-
-        recipe_node = ("R", node.name, recipe_index)
+        recipe_node = ("R", node.name, node.way_index)
         nodes.add(recipe_node)
         edges.add((recipe_node, field_node))
 
