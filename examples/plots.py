@@ -211,99 +211,55 @@ def _draw_multicolor_edges(
         )
 
 
-def _draw_need_edges(
+def _draw_recipe_edges(
     graph,
     pos,
     ax,
     *,
+    edge_builder,
     recipe_colors,
+    connectionstyle,
+    min_source_margin,
+    min_target_margin,
     recipe_styles=None,
-    width=NEED_EDGE_WIDTH,
+    width,
     alpha=1.0,
     arrowsize=16,
 ):
     if recipe_styles is None:
         recipe_styles = {}
     for recipe_node in _sorted_recipe_nodes(graph):
-        need_edges = _display_need_edges(graph, recipe_node)
-        if not need_edges:
+        edges = edge_builder(recipe_node)
+        if not edges:
             continue
         if isinstance(recipe_colors[recipe_node], list):
             _draw_multicolor_edges(
                 graph,
                 pos,
                 ax,
-                edgelist=need_edges,
+                edgelist=edges,
                 colors=recipe_colors[recipe_node],
                 width=width,
                 alpha=alpha,
                 arrowsize=arrowsize,
-                connectionstyle="arc3,rad=0.18",
-                min_source_margin=20,
-                min_target_margin=10,
+                connectionstyle=connectionstyle,
+                min_source_margin=min_source_margin,
+                min_target_margin=min_target_margin,
             )
             continue
         nx.draw_networkx_edges(
             graph,
             pos,
-            edgelist=need_edges,
+            edgelist=edges,
             arrows=True,
             arrowstyle="->",
             arrowsize=arrowsize,
             width=width,
             edge_color=[recipe_colors[recipe_node]],
             style=recipe_styles.get(recipe_node, "solid"),
-            connectionstyle="arc3,rad=0.18",
-            min_source_margin=20,
-            min_target_margin=10,
-            alpha=alpha,
-            ax=ax,
-        )
-
-
-def _draw_out_edges(
-    graph,
-    pos,
-    ax,
-    *,
-    recipe_colors,
-    recipe_styles=None,
-    width=OUT_EDGE_WIDTH,
-    alpha=1.0,
-    arrowsize=16,
-):
-    if recipe_styles is None:
-        recipe_styles = {}
-    for recipe_node in _sorted_recipe_nodes(graph):
-        out_edge = _display_out_edge(recipe_node)
-        if isinstance(recipe_colors[recipe_node], list):
-            _draw_multicolor_edges(
-                graph,
-                pos,
-                ax,
-                edgelist=out_edge,
-                colors=recipe_colors[recipe_node],
-                width=width,
-                alpha=alpha,
-                arrowsize=arrowsize,
-                connectionstyle="arc3,rad=0.08",
-                min_source_margin=10,
-                min_target_margin=20,
-            )
-            continue
-        nx.draw_networkx_edges(
-            graph,
-            pos,
-            edgelist=out_edge,
-            arrows=True,
-            arrowstyle="->",
-            arrowsize=arrowsize,
-            width=width,
-            edge_color=[recipe_colors[recipe_node]],
-            style=recipe_styles.get(recipe_node, "solid"),
-            connectionstyle="arc3,rad=0.08",
-            min_source_margin=10,
-            min_target_margin=20,
+            connectionstyle=connectionstyle,
+            min_source_margin=min_source_margin,
+            min_target_margin=min_target_margin,
             alpha=alpha,
             ax=ax,
         )
@@ -408,20 +364,30 @@ def _draw_and_or_base(
     pos = _and_or_layout(computation_graph, graph)
     if edge_recipe_colors is None:
         edge_recipe_colors = recipe_facecolors
-    _draw_need_edges(
+    _draw_recipe_edges(
         graph,
         pos,
         ax,
+        edge_builder=lambda recipe_node: _display_need_edges(graph, recipe_node),
         recipe_colors=edge_recipe_colors,
+        connectionstyle="arc3,rad=0.18",
+        min_source_margin=20,
+        min_target_margin=10,
         recipe_styles=recipe_styles,
+        width=NEED_EDGE_WIDTH,
         alpha=edge_alpha,
     )
-    _draw_out_edges(
+    _draw_recipe_edges(
         graph,
         pos,
         ax,
+        edge_builder=_display_out_edge,
         recipe_colors=edge_recipe_colors,
+        connectionstyle="arc3,rad=0.08",
+        min_source_margin=10,
+        min_target_margin=20,
         recipe_styles=recipe_styles,
+        width=OUT_EDGE_WIDTH,
         alpha=edge_alpha,
     )
     _draw_field_nodes(
