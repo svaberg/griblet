@@ -74,14 +74,12 @@ class Pathfinder:
         if trail is None:
             trail = set()
         if target in trail:
-            logger.warning("Cycle detected on %s", target)
             return float("inf"), None
 
         if target in self.memo:
             return self.memo[target]
 
         if target not in self.graph.ways:
-            logger.warning("Unknown field %s", target)
             raise KeyError(target)
 
         best_cost = float("inf")
@@ -126,7 +124,6 @@ class Pathfinder:
         trail.remove(target)
 
         if best_step is None:
-            logger.warning("Cannot find path to %s", target)
             self.memo[target] = (float("inf"), None)
             raise NoPathError(f"No path to {target}.")
 
