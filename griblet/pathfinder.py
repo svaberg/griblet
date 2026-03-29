@@ -122,10 +122,9 @@ class Pathfinder:
                 try:
                     need_cost, need_path = self._find_path(need, trail)
                 except (NoPathError, KeyError):
-                    logger.debug("Way %d for %s failed at need %s", i, target, need)
-                    break
+                    need_path = None
                 if need_path is None:
-                    logger.debug("Way %d for %s hit an invalid subpath at %s", i, target, need)
+                    logger.debug("Way %d for %s failed at need %s", i, target, need)
                     break
                 total += need_cost
                 subpaths.append(need_path)
@@ -146,7 +145,6 @@ class Pathfinder:
                         target,
                         total,
                     )
-                continue
 
         trail.remove(target)
 
