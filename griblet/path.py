@@ -44,4 +44,4 @@ class Path:
     root: Step
 
     def __str__(self):
-        return str(self.root)
+        return f"Path to {self.root.name} (total cost: {self.cost})\n{self.root}"

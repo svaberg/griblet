@@ -52,6 +52,15 @@ class BaseLoader:
             )
         return graph
 
+    def _field_summary(self):
+        return ", ".join(sorted(self._fields)) or "-"
+
+    def __str__(self):
+        return "\n".join([
+            type(self).__name__,
+            f"  fields: {self._field_summary()}",
+        ])
+
 
 class BlockLoader(BaseLoader):
     """
@@ -82,3 +91,12 @@ class BlockLoader(BaseLoader):
 
     def cost(self, field: str) -> float:
         return self.cached_cost if self._loaded else self.load_cost
+
+    def __str__(self):
+        return "\n".join([
+            type(self).__name__,
+            f"  fields: {self._field_summary()}",
+            f"  state: {'loaded' if self._loaded else 'not loaded'}",
+            f"  load cost: {self.load_cost}",
+            f"  cached cost: {self.cached_cost}",
+        ])

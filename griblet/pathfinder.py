@@ -24,8 +24,7 @@ def explain_field(graph, target: str) -> str:
     """
     Return a readable explanation of the chosen path for `target`.
     """
-    path = Pathfinder(graph).find_path(target)
-    return f"{target} total_cost={path.cost}\n{path}"
+    return str(Pathfinder(graph).find_path(target))
 
 
 def follow_path(path: Path, graph):
@@ -65,6 +64,14 @@ class Pathfinder:
     def __init__(self, graph):
         self.graph = graph
         self.memo = {}
+
+    def __str__(self):
+        fields = ", ".join(sorted(self.graph.fields())) or "-"
+        return "\n".join([
+            "Pathfinder",
+            f"  fields: {fields}",
+            f"  memoized targets: {len(self.memo)}",
+        ])
 
     def _find_path(
         self,

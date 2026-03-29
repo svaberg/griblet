@@ -145,9 +145,65 @@ def test_explain_field_reports_total_cost_and_tree():
 
     explanation = explain_field(graph, "y")
 
-    assert explanation.startswith("y total_cost=3.0\n")
+    assert explanation.startswith("Path to y (total cost: 3.0)\n")
     assert "y (cost: 2.0)" in explanation
     assert "x (cost: 1.0) [source]" in explanation
+
+
+def test_cache_str_reports_loader_costs_and_cached_fields():
+    cache = Cache(ScalarCacheLoader(), uncached_cost=9.0, cached_cost=0.5)
+
+    assert str(cache) == "\n".join([
+        "Cache",
+        "  loader: ScalarCacheLoader",
+        "  uncached cost: 9.0",
+        "  cached cost: 0.5",
+        "  cached fields: -",
+    ])
+
+    cache.get("x")
+
+    assert str(cache).endswith("  cached fields: x")
+
+
+def test_base_loader_str_lists_fields():
+    assert str(DemoLoader()) == "\n".join([
+        "DemoLoader",
+        "  fields: x, y",
+    ])
+
+
+def test_block_loader_str_reports_state_and_costs():
+    loader = BlockLoader({"x": 4, "y": 5}, load_cost=3.0, cached_cost=0.2)
+
+    assert str(loader) == "\n".join([
+        "BlockLoader",
+        "  fields: x, y",
+        "  state: not loaded",
+        "  load cost: 3.0",
+        "  cached cost: 0.2",
+    ])
+
+    loader.load("x")
+
+    assert "  state: loaded" in str(loader)
+
+
+def test_pathfinder_str_lists_known_fields_and_memo_size():
+    graph = Graph()
+    graph.add("x", lambda: 2, cost=1.0)
+    graph.add("y", lambda x: x + 1, needs=["x"], cost=2.0)
+    finder = Pathfinder(graph)
+
+    assert str(finder) == "\n".join([
+        "Pathfinder",
+        "  fields: x, y",
+        "  memoized targets: 0",
+    ])
+
+    finder.find_path("y")
+
+    assert "  memoized targets: 2" in str(finder)
 
 
 def test_cache_caches_scalar_loads_and_updates_cost():
