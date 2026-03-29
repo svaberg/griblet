@@ -42,11 +42,13 @@ class Graph:
         """
         Merge all ways from another Graph into this one.
         """
-        merged = 0
         for name, ways in other.ways.items():
             self.ways.setdefault(name, []).extend(ways)
-            merged += len(ways)
-        logger.debug("Merged %d way(s) across %d field(s)", merged, len(other.ways))
+        logger.debug(
+            "Merged %d way(s) across %d field(s)",
+            sum(map(len, other.ways.values())),
+            len(other.ways),
+        )
         return self
 
     def compute(self, name):
