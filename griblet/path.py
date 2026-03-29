@@ -45,6 +45,3 @@ class Path:
 
     def __str__(self):
         return str(self.root)
-
-    def __repr__(self):
-        return f"Path(cost={self.cost!r}, root={self.root!r})"
