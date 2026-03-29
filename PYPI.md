@@ -5,13 +5,13 @@
 </tr>
 </table>
 
-**Carve computation trees from a burl of dependencies.**
+[![PyPI](https://img.shields.io/badge/PyPI-griblet-blue)](https://pypi.org/project/griblet/) [![Version](https://img.shields.io/pypi/v/griblet)](https://pypi.org/project/griblet/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![DOI](https://zenodo.org/badge/996606023.svg)](https://doi.org/10.5281/zenodo.19239863) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/0a9aa6e148d845a780466a718a1f96b6)](https://app.codacy.com/gh/svaberg/griblet/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-Griblet builds and evaluates computation trees from a graph with more than one way to reach each field.
+The griblet knows the easiest path to your data.
 
-- more than one path to a result
-- dynamic cost, including cache-aware and loader-aware evaluation
-- suitable for scientific post-processing and derived quantities
+- It thrives where there are multiple, looping paths.
+- It can account for cache and disk state.
+- It loves scientific post-processing.
 
 ## Installation
 
@@ -21,11 +21,11 @@ Install `griblet` in the usual way:
 pip install griblet
 ```
 
-The `griblet` package has no runtime dependencies.
+The `griblet` has no runtime dependencies.
 
 ## Example
 
-Start by building a graph. The graph below can reach `volume` in two ways: one through `area`, and one directly from `length`, `width`, and `height`.
+Start by describing common computational paths in your data. For example, below one can compute `volume` via two paths: via `area`, and directly from `length`, `width`, and `height`.
 
 ```python
 from griblet import Graph
@@ -59,4 +59,8 @@ graph.add(
 print(graph.compute("volume"))
 ```
 
-If the graph has no valid path to the requested field, `griblet` raises `NoPathError`.
+The griblet finds the easiest path.
+
+The griblet is okay with disconnected graphs; when there is no path to the requested field, `griblet` raises `NoPathError`. The user can then consider adding further computational paths with `graph.add`.
+
+For more examples, see the files in [examples/](https://github.com/svaberg/griblet/tree/master/examples).
