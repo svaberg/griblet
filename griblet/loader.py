@@ -81,7 +81,8 @@ class BlockLoader(BaseLoader):
         load_cost: cost to access a field if not yet loaded (simulates slow IO)
         cached_cost: cost for future accesses (simulates cheap in-memory access)
         """
-        self.file_handle = file_handle
+        super().__init__()
+        self._fields = file_handle
         self._cache = {}          # field -> value
         self._loaded = False
         self.load_cost = load_cost
@@ -90,12 +91,9 @@ class BlockLoader(BaseLoader):
     def load(self, field: str) -> Any:
         if not self._loaded:
             logger.info("BlockLoader loading all fields in a single operation")
-            self._cache = dict(self.file_handle)
+            self._cache = dict(self._fields)
             self._loaded = True
         return self._cache[field]
 
     def cost(self, field: str) -> float:
         return self.cached_cost if self._loaded else self.load_cost
-
-    def fields(self) -> List[str]:
-        return list(self.file_handle.keys())
