@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 from griblet import Graph, NoPathError
@@ -204,6 +206,70 @@ def test_pathfinder_str_lists_known_fields_and_memo_size():
     finder.find_path("y")
 
     assert "  memoized targets: 2" in str(finder)
+
+
+def test_graph_compute_logs_compute_and_path_messages(caplog):
+    graph = Graph()
+    graph.add("x", lambda: 2, cost=1.0)
+    graph.add("y", lambda x: x + 1, needs=["x"], cost=2.0)
+
+    with caplog.at_level(logging.DEBUG):
+        assert graph.compute("y") == 3
+
+    assert "Computing y" in caplog.text
+    assert "Chosen path for y:" in caplog.text
+    assert "Found path to y with total cost 3.0" in caplog.text
+    assert "Computed y with total cost 3.0" in caplog.text
+
+
+def test_cache_logs_miss_hit_and_bulk_load(caplog):
+    cache = Cache(BulkCacheLoader(), uncached_cost=9.0, cached_cost=0.5)
+
+    with caplog.at_level(logging.DEBUG):
+        assert cache.get("x") == 1
+        assert cache.get("x") == 1
+
+    assert "Cache miss for x" in caplog.text
+    assert "Loaded 2 field(s) while fetching x" in caplog.text
+    assert "Cache hit for x" in caplog.text
+
+
+def test_block_loader_logs_block_load(caplog):
+    loader = BlockLoader({"x": 4, "y": 5}, load_cost=3.0, cached_cost=0.2)
+
+    with caplog.at_level(logging.DEBUG):
+        assert loader.load("x") == 4
+        assert loader.load("y") == 5
+
+    assert "Loading block for x (2 field(s))" in caplog.text
+    assert "Serving y from loaded block" in caplog.text
+
+
+def test_pathfinder_logs_failed_route_and_missing_path(caplog):
+    graph = Graph()
+    graph.add("y", lambda x: x + 1, needs=["x"], cost=1.0)
+
+    with caplog.at_level(logging.DEBUG):
+        with pytest.raises(NoPathError):
+            Pathfinder(graph).find_path("y")
+
+    assert "Trying way 0 for y with needs=('x',) and local cost=1.0" in caplog.text
+    assert "Way 0 for y failed at need x" in caplog.text
+    assert "No path found to y" in caplog.text
+
+
+def test_follow_path_logs_cost_change(caplog):
+    graph = Graph()
+    cost = [1.0]
+    graph.add("x", lambda: 2, cost=lambda: cost[0])
+    path = Pathfinder(graph).find_path("x")
+
+    with caplog.at_level(logging.INFO):
+        assert follow_path(path, graph) == 2
+        cost[0] = 2.0
+        assert follow_path(path, graph) == 2
+
+    assert "Cost change for x: 1.0 -> 2.0" in caplog.text
 
 
 def test_cache_caches_scalar_loads_and_updates_cost():

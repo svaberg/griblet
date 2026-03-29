@@ -2,6 +2,11 @@
 Graph of ways to reach data.
 """
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 class Graph:
     """
@@ -17,19 +22,31 @@ class Graph:
         """
         Add one way to reach `name`.
         """
+        needs = tuple(needs or ())
+        metadata = dict(metadata or {})
         self.ways.setdefault(name, []).append({
-            "needs": tuple(needs or ()),
+            "needs": needs,
             "func": func,
             "cost": cost,
-            "metadata": dict(metadata or {}),
+            "metadata": metadata,
         })
+        logger.debug(
+            "Added way %d for %s with needs=%s and cost=%s",
+            len(self.ways[name]),
+            name,
+            needs,
+            "callable" if callable(cost) else cost,
+        )
 
     def merge(self, other):
         """
         Merge all ways from another Graph into this one.
         """
+        merged = 0
         for name, ways in other.ways.items():
             self.ways.setdefault(name, []).extend(ways)
+            merged += len(ways)
+        logger.debug("Merged %d way(s) across %d field(s)", merged, len(other.ways))
         return self
 
     def compute(self, name):
@@ -38,8 +55,12 @@ class Graph:
         """
         from .pathfinder import Pathfinder, follow_path
 
+        logger.info("Computing %s", name)
         path = Pathfinder(self).find_path(name)
-        return follow_path(path, self)
+        logger.debug("Chosen path for %s:\n%s", name, path)
+        value = follow_path(path, self)
+        logger.info("Computed %s with total cost %s", name, path.cost)
+        return value
 
     def fields(self):
         return set(self.ways)

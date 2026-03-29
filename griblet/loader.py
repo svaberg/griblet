@@ -5,9 +5,13 @@ Defines loader classes that expose externally stored field values as
 zero-need graph entries with associated access costs.
 Supports simple per-field loading and block-style bulk loading with caching.
 """
+import logging
 from typing import Any, Dict, Optional, Union
 
 from .graph import Graph
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseLoader:
@@ -27,6 +31,7 @@ class BaseLoader:
         """
         if field not in self._fields:
             raise ValueError(f"Field '{field}' not found.")
+        logger.debug("Loading %s from %s", field, type(self).__name__)
         return self._fields[field]
 
     def cost(self, field: str) -> float:
@@ -42,6 +47,11 @@ class BaseLoader:
         Return a Graph with one source path for each field.
         """
         graph = Graph()
+        logger.debug(
+            "Exposing %d field(s) from %s as a graph",
+            len(self._fields),
+            type(self).__name__,
+        )
         for name in self._fields:
             way_cost = (lambda name=name: self.cost(name)) if cost is None else cost
             graph.add(
@@ -85,8 +95,15 @@ class BlockLoader(BaseLoader):
 
     def load(self, field: str) -> Any:
         if not self._loaded:
+            logger.info(
+                "Loading block for %s (%d field(s))",
+                field,
+                len(self._fields),
+            )
             self._cache = dict(self._fields)
             self._loaded = True
+        else:
+            logger.debug("Serving %s from loaded block", field)
         return self._cache[field]
 
     def cost(self, field: str) -> float:

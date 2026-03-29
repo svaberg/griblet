@@ -24,6 +24,7 @@ def explain_field(graph, target: str) -> str:
     """
     Return a readable explanation of the chosen path for `target`.
     """
+    logger.debug("Explaining path to %s", target)
     return str(Pathfinder(graph).find_path(target))
 
 
@@ -43,14 +44,22 @@ def follow_path(path: Path, graph):
 
         way = graph.ways[node.name][node.way_index]
         cost_val = _way_cost(way)
+        logger.debug(
+            "Following %s via way %s with local cost %s",
+            node.name,
+            node.way_index,
+            cost_val,
+        )
 
         if node.is_source:
             set_actual_cost(node, cost_val)
+            logger.debug("Loaded source %s", node.name)
             return way["func"]()
 
         values = [follow_step(need) for need in node.needs]
         total_cost = cost_val + sum(need.last_actual_cost for need in node.needs)
         set_actual_cost(node, total_cost)
+        logger.debug("Computed %s with actual cost %s", node.name, total_cost)
         return way["func"](*values)
 
     return follow_step(path.root)
@@ -78,12 +87,15 @@ class Pathfinder:
         target: str,
         trail: Optional[Set[str]] = None,
     ) -> Tuple[float, Optional[Step]]:
+        logger.debug("Searching for a path to %s", target)
         if trail is None:
             trail = set()
         if target in trail:
+            logger.debug("Cycle encountered while searching for %s", target)
             return float("inf"), None
 
         if target in self.memo:
+            logger.debug("Using memoized path to %s", target)
             return self.memo[target]
 
         if target not in self.graph.ways:
@@ -99,12 +111,21 @@ class Pathfinder:
             subpaths = []
             cost_val = _way_cost(way)
             total = cost_val
+            logger.debug(
+                "Trying way %d for %s with needs=%s and local cost=%s",
+                i,
+                target,
+                needs,
+                cost_val,
+            )
             for need in needs:
                 try:
                     need_cost, need_path = self._find_path(need, trail)
                 except (NoPathError, KeyError):
+                    logger.debug("Way %d for %s failed at need %s", i, target, need)
                     break
                 if need_path is None:
+                    logger.debug("Way %d for %s hit an invalid subpath at %s", i, target, need)
                     break
                 total += need_cost
                 subpaths.append(need_path)
@@ -119,12 +140,19 @@ class Pathfinder:
                         needs=subpaths,
                         metadata=way.get("metadata", {}),
                     )
+                    logger.debug(
+                        "Way %d is the new best path to %s with total cost %s",
+                        i,
+                        target,
+                        total,
+                    )
                 continue
 
         trail.remove(target)
 
         if best_step is None:
             self.memo[target] = (float("inf"), None)
+            logger.warning("No path found to %s", target)
             raise NoPathError(f"No path to {target}.")
 
         self.memo[target] = (best_cost, best_step)
@@ -134,4 +162,6 @@ class Pathfinder:
         """
         Find the lowest-cost path to `target`.
         """
-        return Path(*self._find_path(target))
+        path = Path(*self._find_path(target))
+        logger.info("Found path to %s with total cost %s", target, path.cost)
+        return path
