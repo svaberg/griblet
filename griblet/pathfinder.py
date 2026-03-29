@@ -32,6 +32,12 @@ def follow_path(path: Path, graph):
     """
     Follow a chosen path and return the computed result.
     """
+    def set_actual_cost(node: Step, actual_cost: float):
+        prev = node.last_actual_cost
+        node.last_actual_cost = actual_cost
+        if prev is not None and prev != actual_cost:
+            logger.info("Cost change for %s: %s -> %s", node.name, prev, actual_cost)
+
     def follow_step(node: Step):
         if node.way_index is None:
             raise RuntimeError(f"No chosen way for {node.name}")
@@ -40,18 +46,12 @@ def follow_path(path: Path, graph):
         cost_val = _way_cost(way)
 
         if node.is_source:
-            prev = node.last_actual_cost
-            node.last_actual_cost = cost_val
-            if prev is not None and prev != cost_val:
-                logger.info("Cost change for %s: %s -> %s", node.name, prev, cost_val)
+            set_actual_cost(node, cost_val)
             return way["func"]()
 
         values = [follow_step(need) for need in node.needs]
         total_cost = cost_val + sum(need.last_actual_cost for need in node.needs)
-        prev = node.last_actual_cost
-        node.last_actual_cost = total_cost
-        if prev is not None and prev != total_cost:
-            logger.info("Cost change for %s: %s -> %s", node.name, prev, total_cost)
+        set_actual_cost(node, total_cost)
         return way["func"](*values)
 
     return follow_step(path.root)
