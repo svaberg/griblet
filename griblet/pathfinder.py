@@ -12,20 +12,23 @@ logger = logging.getLogger(__name__)
 
 
 class NoPathError(Exception):
-    """Raised when no path can reach the requested data."""
+    """Raised when a known target has no valid path through the graph."""
 
 
 def _way_cost(way):
+    """Resolve a way cost stored as either a number or a zero-argument callable."""
     cost = way["cost"]
     return cost() if callable(cost) else cost
 
 
 def explain_field(graph, target: str) -> str:
+    """Return the chosen path to `target` in the same readable form as `Path.__str__`."""
     logger.debug("Explaining path to %s", target)
     return str(Pathfinder(graph).find_path(target))
 
 
 def follow_path(path: Path, graph):
+    """Evaluate a resolved path and record the actual cost paid at each step."""
     def set_actual_cost(node: Step, actual_cost: float):
         prev = node.last_actual_cost
         node.last_actual_cost = actual_cost
@@ -61,14 +64,16 @@ def follow_path(path: Path, graph):
 
 class Pathfinder:
     """
-    Find the lowest-cost path through a Graph.
+    Search a graph for the lowest-cost path to a requested target.
     """
 
     def __init__(self, graph):
+        """Bind the graph to search and initialize the memo table for subpaths."""
         self.graph = graph
         self.memo = {}
 
     def __str__(self):
+        """Summarize the graph being searched and the current memo table size."""
         fields = ", ".join(sorted(self.graph.fields())) or "-"
         return "\n".join([
             "Pathfinder",
@@ -81,6 +86,7 @@ class Pathfinder:
         target: str,
         trail: Optional[Set[str]] = None,
     ) -> Tuple[float, Optional[Step]]:
+        """Return the cheapest step tree for `target`, or fail if no path works."""
         logger.debug("Searching for a path to %s", target)
         trail = set() if trail is None else trail
         if target in trail:
@@ -149,6 +155,7 @@ class Pathfinder:
         return best_cost, best_step
 
     def find_path(self, target: str) -> Path:
+        """Return the lowest-cost Path object that reaches `target`."""
         path = Path(*self._find_path(target))
         logger.info("Found path to %s with total cost %s", target, path.cost)
         return path

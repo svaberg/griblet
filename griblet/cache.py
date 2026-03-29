@@ -13,18 +13,20 @@ logger = logging.getLogger(__name__)
 
 class Cache:
     """
-    Cache wrapper around a loader with a cached/uncached cost model.
+    Cache wrapper around a loader with a dynamic cached-versus-uncached cost.
 
     `get()` memoizes loaded values; if the loader returns a dict, all returned
     fields are cached at once. `cost(field)` reflects current cache state.
     """
     def __init__(self, loader, uncached_cost=50, cached_cost=0.1):
+        """Bind a loader and the cost model to use before and after caching."""
         self.loader = loader
         self._cache = {}
         self.uncached_cost = uncached_cost
         self.cached_cost = cached_cost
 
     def get(self, field):
+        """Return `field`, populating the cache from scalar or bulk loader output."""
         if field in self._cache:
             logger.debug("Cache hit for %s", field)
             return self._cache[field]
@@ -49,9 +51,11 @@ class Cache:
         return loaded
 
     def cost(self, field):
+        """Return the current access cost implied by the cache state."""
         return self.cached_cost if field in self._cache else self.uncached_cost
 
     def __str__(self):
+        """Summarize the loader, cost model, and currently cached fields."""
         return "\n".join([
             "Cache",
             f"  loader: {type(self.loader).__name__}",

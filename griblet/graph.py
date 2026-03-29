@@ -10,15 +10,17 @@ logger = logging.getLogger(__name__)
 
 class Graph:
     """
-    Registry of ways to reach named data.
+    Registry of all known ways to derive named data.
     """
 
     def __init__(self, other_graph=None):
+        """Start an empty graph, optionally seeded with another graph's ways."""
         self.ways = {}
         if other_graph is not None:
             self.merge(other_graph)
 
     def add(self, name, func, *, needs=None, cost=1.0, metadata=None):
+        """Register one way to produce `name` from `needs` with the given cost."""
         needs = tuple(needs or ())
         metadata = dict(metadata or {})
         self.ways.setdefault(name, []).append({
@@ -36,6 +38,7 @@ class Graph:
         )
 
     def merge(self, other):
+        """Copy all ways from `other` into this graph and return `self`."""
         for name, ways in other.ways.items():
             self.ways.setdefault(name, []).extend(ways)
         logger.debug(
@@ -46,6 +49,7 @@ class Graph:
         return self
 
     def compute(self, name):
+        """Resolve and evaluate the lowest-cost path to `name`."""
         from .pathfinder import Pathfinder, follow_path
 
         logger.info("Computing %s", name)
@@ -56,9 +60,11 @@ class Graph:
         return value
 
     def fields(self):
+        """Return the output names for which the graph has at least one way."""
         return set(self.ways)
 
     def __str__(self):
+        """Summarize the graph as fields followed by their registered ways."""
         lines = []
         for name in sorted(self.ways):
             lines.append(f"{name}:")
