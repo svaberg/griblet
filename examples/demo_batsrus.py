@@ -139,9 +139,12 @@ def make_wind_graph():
     return graph
 
 
+def build_wind_graph():
+    return Graph(WindLoader().as_graph()).merge(make_wind_graph())
+
+
 if __name__ == "__main__":
-    graph = Graph(WindLoader().as_graph())
-    graph.merge(make_wind_graph())
+    graph = build_wind_graph()
 
     path = Pathfinder(graph).find_path("T ideal (K)")
     value = graph.compute("T ideal (K)")

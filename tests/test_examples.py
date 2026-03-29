@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from griblet import Graph, NoPathError
+from griblet import NoPathError
 from griblet.pathfinder import Pathfinder
 
-from demo_batsrus import WindLoader, make_wind_graph
+from demo_batsrus import WindLoader, build_wind_graph, make_wind_graph
 from demo_networkx import plot_networkx_graph
 from box_demo import BoxLoader, build_box_graph, make_box_graph, ureg
 import plots
@@ -57,8 +57,7 @@ def test_box_extra_fields():
 
 
 def test_batsrus_example_flow_resolves_and_evaluates():
-    graph = Graph(WindLoader().as_graph())
-    graph.merge(make_wind_graph())
+    graph = build_wind_graph()
 
     path = Pathfinder(graph).find_path("T ideal (K)")
     value = graph.compute("T ideal (K)")
