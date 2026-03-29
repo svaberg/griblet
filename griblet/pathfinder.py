@@ -133,7 +133,7 @@ class Pathfinder:
                         name=target,
                         cost=cost_val,
                         way_index=i,
-                        is_source=(len(needs) == 0),
+                        is_source=not needs,
                         needs=subpaths,
                         metadata=way.get("metadata", {}),
                     )
