@@ -6,11 +6,6 @@ either a single field value or a dict of multiple fields (bulk load), updating
 the cache accordingly. Exposes a simple dynamic cost: cached vs uncached.
 """
 
-import logging
-
-
-logger = logging.getLogger(__name__)
-
 class Cache:
     """
     Cache wrapper around a loader with a cached/uncached cost model.
@@ -30,8 +25,6 @@ class Cache:
         loaded = self.loader.load(field)
         loaded_fields = loaded if isinstance(loaded, dict) else {field: loaded}
         self._cache.update(loaded_fields)
-        for key in loaded_fields:
-            logger.info("Added %s to cache", key)
         if field not in loaded_fields:
             raise KeyError(f"Field {field} not found in loaded data")
         return loaded_fields[field]
