@@ -28,17 +28,13 @@ class Cache:
         if field in self._cache:
             return self._cache[field]
         loaded = self.loader.load(field)
-        if isinstance(loaded, dict):
-            self._cache.update(loaded)
-            for key in loaded:
-                logger.info("Added %s to cache", key)
-            if field not in loaded:
-                raise KeyError(f"Field {field} not found in loaded data")
-            return loaded[field]
-        else:
-            self._cache[field] = loaded
-            logger.info("Added %s to cache", field)
-            return loaded
+        loaded_fields = loaded if isinstance(loaded, dict) else {field: loaded}
+        self._cache.update(loaded_fields)
+        for key in loaded_fields:
+            logger.info("Added %s to cache", key)
+        if field not in loaded_fields:
+            raise KeyError(f"Field {field} not found in loaded data")
+        return loaded_fields[field]
 
     def is_cached(self, field):
         return field in self._cache
