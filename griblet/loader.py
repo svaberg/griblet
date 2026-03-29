@@ -25,27 +25,17 @@ class BaseLoader:
         self._fields = {}
 
     def load(self, field: str) -> Any:
-        """
-        Load a field by name. By default, looks up in self._fields.
-        Subclasses can override for custom loading logic.
-        """
         if field not in self._fields:
             raise ValueError(f"Field '{field}' not found.")
         logger.debug("Loading %s from %s", field, type(self).__name__)
         return self._fields[field]
 
     def cost(self, field: str) -> float:
-        """
-        Return the cost of fetching the field. Subclasses can override.
-        """
         if field not in self._fields:
             raise ValueError(f"Field '{field}' not found.")
         return 0.1
 
     def as_graph(self, cost: Optional[Union[float, Any]] = None):
-        """
-        Return a Graph with one source path for each field.
-        """
         graph = Graph()
         logger.debug(
             "Exposing %d field(s) from %s as a graph",
@@ -81,11 +71,6 @@ class BlockLoader(BaseLoader):
     as a zero-need graph entry.
     """
     def __init__(self, file_handle: Dict[str, Any], load_cost=1.0, cached_cost=0.05):
-        """
-        file_handle: dict-like, mapping field names to values (can be adapted for real files)
-        load_cost: cost to access a field if not yet loaded (simulates slow IO)
-        cached_cost: cost for future accesses (simulates cheap in-memory access)
-        """
         super().__init__()
         self._fields = file_handle
         self._cache = {}
