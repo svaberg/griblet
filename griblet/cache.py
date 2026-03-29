@@ -30,22 +30,23 @@ class Cache:
             return self._cache[field]
         logger.debug("Cache miss for %s", field)
         loaded = self.loader.load(field)
-        loaded_fields = loaded if isinstance(loaded, dict) else {field: loaded}
-        self._cache.update(loaded_fields)
         if isinstance(loaded, dict):
+            self._cache.update(loaded)
             logger.info(
                 "Loaded %d field(s) while fetching %s",
-                len(loaded_fields),
+                len(loaded),
                 field,
             )
-        if field not in loaded_fields:
+            if field in loaded:
+                return loaded[field]
             logger.warning(
                 "Loader %s did not provide requested field %s",
                 type(self.loader).__name__,
                 field,
             )
             raise KeyError(f"Field {field} not found in loaded data")
-        return loaded_fields[field]
+        self._cache[field] = loaded
+        return loaded
 
     def cost(self, field):
         return self.cached_cost if field in self._cache else self.uncached_cost
