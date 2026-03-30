@@ -18,8 +18,8 @@ def test_demo_best_path_flow():
     value_second = graph.compute("volume")
 
     assert path.cost == pytest.approx(2.2)
-    assert value.to(ureg.meter**3).magnitude == pytest.approx([60.0])
-    assert value_second.to(ureg.meter**3).magnitude == pytest.approx([60.0])
+    assert value.to(ureg.meter**3).magnitude == pytest.approx(60.0)
+    assert value_second.to(ureg.meter**3).magnitude == pytest.approx(60.0)
 
 
 def test_demo_rerouting_flow():
@@ -34,8 +34,8 @@ def test_demo_rerouting_flow():
 
     graph.paths.pop("length", None)
 
-    assert value_1.to(ureg.meter**3).magnitude == pytest.approx([60.0])
-    assert value_2.to(ureg.meter**3).magnitude == pytest.approx([60.0])
+    assert value_1.to(ureg.meter**3).magnitude == pytest.approx(60.0)
+    assert value_2.to(ureg.meter**3).magnitude == pytest.approx(60.0)
     assert path_2.cost > path_1.cost
 
     with pytest.raises(NoPathError):
@@ -48,8 +48,8 @@ def test_box_extra_fields():
     base_perimeter = graph.compute("base_perimeter")
     linear_size = graph.compute("linear_size")
 
-    assert base_perimeter.to(ureg.meter).magnitude == pytest.approx([18.0])
-    assert linear_size.to(ureg.meter).magnitude == pytest.approx([12.0])
+    assert base_perimeter.to(ureg.meter).magnitude == pytest.approx(18.0)
+    assert linear_size.to(ureg.meter).magnitude == pytest.approx(12.0)
 
 
 def test_batsrus_example_flow_resolves_and_evaluates():

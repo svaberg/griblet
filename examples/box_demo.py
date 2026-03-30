@@ -3,7 +3,6 @@
 import json
 from pathlib import Path
 
-import numpy as np
 import pint
 
 from griblet import Graph
@@ -21,7 +20,7 @@ class BoxLoader(Loader):
         super().__init__()
         raw_fields = json.loads(BOX_DATA_PATH.read_text())
         self._fields = {
-            name: np.array(spec["value"]) * ureg(spec["unit"])
+            name: spec["value"] * ureg(spec["unit"])
             for name, spec in raw_fields.items()
         }
 
