@@ -10,7 +10,6 @@ from griblet.loader import Loader
 
 ureg = pint.UnitRegistry()
 BOX_DATA_PATH = Path(__file__).with_name("box_data.json")
-BOX_FIELDS = ("length", "width", "height", "area")
 
 
 class BoxLoader(Loader):
@@ -18,7 +17,7 @@ class BoxLoader(Loader):
 
     def __init__(self):
         super().__init__()
-        self._fields = dict.fromkeys(BOX_FIELDS)
+        self._fields = dict.fromkeys(json.loads(BOX_DATA_PATH.read_text()))
 
     def load(self, field):
         """Read the JSON file and extract just the requested field."""
