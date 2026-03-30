@@ -83,17 +83,16 @@ class Pathfinder:
         trail.add(target)
 
         for i, step in enumerate(self.graph.paths[target], 1):
-            needs = step.needs
             child_paths = []
             total_cost = step.cost
             logger.debug(
                 "Trying step %d for %s with needs=%s and cost=%s",
                 i,
                 target,
-                needs,
+                step.needs,
                 step.cost,
             )
-            for need in needs:
+            for need in step.needs:
                 try:
                     need_path = self._find_path(need, trail)
                 except (NoPathError, KeyError):
