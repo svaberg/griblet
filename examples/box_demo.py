@@ -17,16 +17,19 @@ class BoxLoader(Loader):
     Load one requested box field at a time from the example JSON file.
 
     This loader is intentionally plain rather than optimized. It reads the
-    JSON once in `__init__` to discover which fields exist, but it does not
-    keep the field values resident. Each `load(field)` call rereads the file,
-    extracts one field, and discards the rest. That keeps this example focused
-    on what an ordinary file-backed loader looks like, in contrast to a block
-    loader that keeps many fields resident after one read.
+    JSON once in `__init__` to discover which fields exist and what units they
+    use, but it does not keep the field values resident. Each `load(field)`
+    call rereads the file, extracts one field, and discards the rest. That
+    keeps this example focused on what an ordinary file-backed loader looks
+    like, in contrast to a block loader that keeps many fields resident after
+    one read.
     """
 
     def __init__(self):
         super().__init__()
-        self._fields = dict.fromkeys(json.loads(BOX_DATA_PATH.read_text()))
+        specs = json.loads(BOX_DATA_PATH.read_text())
+        self._fields = dict.fromkeys(specs)
+        self._units = {name: ureg(spec["unit"]).units for name, spec in specs.items()}
 
     def load(self, field):
         """
@@ -37,7 +40,19 @@ class BoxLoader(Loader):
         if field not in self._fields:
             raise ValueError(f"Field '{field}' not found.")
         spec = json.loads(BOX_DATA_PATH.read_text())[field]
-        return spec["value"] * ureg(spec["unit"])
+        return spec["value"] * self._units[field]
+
+    def as_graph(self, cost=None):
+        """Expose the source fields together with the units declared in JSON."""
+        graph = Graph()
+        for name in self.fields():
+            graph.add(
+                name,
+                lambda name=name: self.load(name),
+                cost=self.cost(name) if cost is None else cost,
+                metadata={"description": type(self).__name__, "unit": self._units[name]},
+            )
+        return graph
 
 
 def box_graph():
