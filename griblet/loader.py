@@ -123,6 +123,24 @@ class BlockLoader(BaseLoader):
         logger.debug("Serving %s from loaded block", field)
         return self._fields[field]
 
+    def _serve(self, field: str) -> Any:
+        """Serve one field through the owned cache-backed block view."""
+        if self._cache is None:
+            raise RuntimeError("BlockLoader._serve() requires as_graph() first.")
+
+        loaded = self.load(field)
+        if isinstance(loaded, dict):
+            for loaded_field, value in loaded.items():
+                self._cache._cache[loaded_field] = value
+                self._cache._add_cached_step(loaded_field)
+            if field in loaded:
+                return loaded[field]
+            raise KeyError(f"Field {field} not found in loaded data")
+
+        self._cache._cache[field] = loaded
+        self._cache._add_cached_step(field)
+        return loaded
+
     def cost(self, field: str) -> float:
         """Return the declared pre-cache access cost for `field`."""
         if field not in self._fields:
@@ -137,11 +155,20 @@ class BlockLoader(BaseLoader):
                 "construct the loader with the desired load_cost instead."
             )
         if self._cache is None:
+            graph = Graph()
+            for field in self.fields():
+                graph.add(
+                    field,
+                    lambda field=field: self._serve(field),
+                    cost=self.load_cost,
+                    metadata={"description": type(self).__name__},
+                )
             self._cache = Cache(
-                Graph(),
+                graph,
                 self,
                 load_cost=self.load_cost,
                 cached_cost=self.cached_cost,
+                _register_loader_paths=False,
             )
         return self._cache.graph
 

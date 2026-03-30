@@ -15,7 +15,15 @@ class Cache:
     same graph. Fresh pathfinding then sees those cached steps explicitly.
     """
 
-    def __init__(self, graph, loader, *, load_cost=None, cached_cost=0.1):
+    def __init__(
+        self,
+        graph,
+        loader,
+        *,
+        load_cost=None,
+        cached_cost=0.1,
+        _register_loader_paths=True,
+    ):
         """
         Attach loader-backed source paths to `graph` and manage cached steps.
 
@@ -38,13 +46,14 @@ class Cache:
         self._cache = {}
         self._cached_steps = {}
 
-        for field in self.loader.fields():
-            graph.add(
-                field,
-                lambda field=field: self.load(field),
-                cost=self.load_cost if self.load_cost is not None else self.loader.cost(field),
-                metadata={"description": type(loader).__name__},
-            )
+        if _register_loader_paths:
+            for field in self.loader.fields():
+                graph.add(
+                    field,
+                    lambda field=field: self.load(field),
+                    cost=self.load_cost if self.load_cost is not None else self.loader.cost(field),
+                    metadata={"description": type(loader).__name__},
+                )
 
     def _add_cached_step(self, field):
         """Add one cheap direct cached step for `field` if it is not present yet."""
