@@ -7,7 +7,7 @@
 
 [![PyPI](https://img.shields.io/badge/PyPI-griblet-blue)](https://pypi.org/project/griblet/) [![Version](https://img.shields.io/pypi/v/griblet)](https://pypi.org/project/griblet/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![DOI](https://zenodo.org/badge/996606023.svg)](https://doi.org/10.5281/zenodo.19239863) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/0a9aa6e148d845a780466a718a1f96b6)](https://app.codacy.com/gh/svaberg/griblet/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-The griblet knows the easiest path to your data.
+The griblet knows the easiest path through your data.
 
 - It thrives where there are multiple, looping paths.
 - It can account for cache and disk state.
@@ -62,5 +62,3 @@ print(graph.compute("volume"))
 The griblet finds the easiest path.
 
 The griblet is okay with disconnected graphs; when there is no path to the requested field, `griblet` raises `NoPathError`. The user can then consider adding further computational paths with `graph.add`.
-
-For more examples, see the files in [examples/](https://github.com/svaberg/griblet/tree/master/examples).
