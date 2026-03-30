@@ -101,3 +101,13 @@ if __name__ == "__main__":
     print("volume:", volume)
     print("base_perimeter:", base_perimeter)
     print("linear_size:", linear_size)
+
+    graph.paths.pop("area", None)
+    rerouted_path = graph.path("volume")
+    rerouted_volume = graph.compute("volume")
+
+    print("\n=== After Removing area ===\n")
+    print(f"cost before: {path.cost}")
+    print(f"cost after: {rerouted_path.cost}\n")
+    print(rerouted_path)
+    print("\nrerouted volume:", rerouted_volume)
