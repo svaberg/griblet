@@ -86,15 +86,15 @@ class BaseLoader:
 
 class BlockLoader(BaseLoader):
     """
-    Loader that reads a whole block at once and can be wrapped by a Cache.
+    Loader that reads a whole block at once and owns a graph cache.
 
-        The first load returns the full block so a wrapping Cache can add cheap
-        cached steps for every field in the block.
+    The first load returns the full block so the owned Cache can add cheap
+    cached steps for every field in the block.
     """
 
-    def __init__(self, file_handle: Dict[str, Any], load_cost=1.0):
+    def __init__(self, file_handle: Dict[str, Any], load_cost=1.0, cached_cost=0.1):
         """
-        Store the backing mapping and the loader cost for block access.
+        Store the backing mapping and the costs before and after residency.
 
         `file_handle` is any mapping from field names to values.
         """
@@ -102,6 +102,8 @@ class BlockLoader(BaseLoader):
         self._fields = file_handle
         self._loaded = False
         self.load_cost = load_cost
+        self.cached_cost = cached_cost
+        self._cache = None
 
     def load(self, field: str) -> Any:
         """
@@ -128,20 +130,27 @@ class BlockLoader(BaseLoader):
         return self.load_cost
 
     def as_graph(self, cost: Optional[Union[float, Any]] = None):
-        """Expose this block loader through an explicit cache-backed graph."""
-        graph = Graph()
-        Cache(
-            graph,
-            self,
-            load_cost=self.load_cost if cost is None else cost,
-        )
-        return graph
+        """Expose this block loader through its owned cache-backed graph."""
+        if cost is not None and cost != self.load_cost:
+            raise ValueError(
+                "BlockLoader.as_graph() uses the loader's own load_cost; "
+                "construct the loader with the desired load_cost instead."
+            )
+        if self._cache is None:
+            self._cache = Cache(
+                Graph(),
+                self,
+                load_cost=self.load_cost,
+                cached_cost=self.cached_cost,
+            )
+        return self._cache.graph
 
     def __str__(self):
-        """Summarize the block loader state, fields, and load cost."""
+        """Summarize the block loader state, fields, and cost model."""
         return "\n".join([
             type(self).__name__,
             f"  fields: {', '.join(sorted(self._fields)) or '-'}",
             f"  state: {'loaded' if self._loaded else 'not loaded'}",
             f"  load cost: {self.load_cost}",
+            f"  cached cost: {self.cached_cost}",
         ])
