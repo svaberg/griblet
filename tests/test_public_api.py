@@ -150,18 +150,6 @@ def test_pathfinder_raises_nopath_for_known_but_unreachable_target():
         Pathfinder(graph).find_path("y")
 
 
-def test_compute_path_records_actual_costs():
-    graph = Graph()
-    graph.add("x", lambda: 2, cost=1.0)
-    graph.add("y", lambda x: x + 1, needs=["x"], cost=2.0)
-
-    path = graph.path("y")
-
-    assert graph.compute(path) == 3
-    assert path.last_actual_cost == pytest.approx(3.0)
-    assert path.needs[0].last_actual_cost == pytest.approx(1.0)
-
-
 def test_path_str_reports_total_cost_and_tree():
     graph = Graph()
     graph.add("x", lambda: 2, cost=1.0)

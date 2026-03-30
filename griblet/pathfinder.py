@@ -20,28 +20,20 @@ class NoPathError(Exception):
 
 def follow_path(path: Path):
     """
-    Evaluate a resolved path and record the actual cost paid at each node.
+    Evaluate a resolved path.
 
-    The returned value is the computed result at the root of the path. As the
-    path is followed, each node's `last_actual_cost` is updated with the cost
-    actually paid during that evaluation.
+    The returned value is the computed result at the root of the path.
     """
-
-    def set_actual_cost(node: Path, actual_cost: float):
-        node.last_actual_cost = actual_cost
 
     def follow(node: Path):
         local_cost = node.local_cost
         logger.debug("Following %s with local cost %s", node.name, local_cost)
         if node.is_source:
-            set_actual_cost(node, local_cost)
             logger.debug("Loaded source %s", node.name)
             return node.func()
 
         values = [follow(need) for need in node.needs]
-        total_cost = local_cost + sum(need.last_actual_cost for need in node.needs)
-        set_actual_cost(node, total_cost)
-        logger.debug("Computed %s with actual cost %s", node.name, total_cost)
+        logger.debug("Computed %s", node.name)
         return node.func(*values)
 
     return follow(path)

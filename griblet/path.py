@@ -21,8 +21,6 @@ class Path:
         Callable used to compute this node once its child paths are available.
     needs:
         Child paths that must be evaluated first.
-    last_actual_cost:
-        Total cost actually paid the last time this path was followed.
     """
 
     name: str
@@ -31,7 +29,6 @@ class Path:
     is_source: bool = False
     needs: List["Path"] = field(default_factory=list)
     metadata: Dict = field(default_factory=dict)
-    last_actual_cost: Optional[float] = None
     _record: Optional[Dict] = field(default=None, repr=False)
 
     @property
