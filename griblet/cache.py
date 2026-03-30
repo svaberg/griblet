@@ -59,11 +59,6 @@ class Cache:
         self._cached_steps[field] = self.graph.paths[field][-1]
         logger.info("Added cached step for %s", field)
 
-    def _store(self, field, value):
-        """Store one cached value and ensure the matching cached step exists."""
-        self._cache[field] = value
-        self._add_cached_step(field)
-
     def load(self, field):
         """
         Return `field`, loading it if needed and caching the result explicitly.
@@ -84,12 +79,14 @@ class Cache:
                 field,
             )
             for loaded_field, value in loaded.items():
-                self._store(loaded_field, value)
+                self._cache[loaded_field] = value
+                self._add_cached_step(loaded_field)
             if field in loaded:
                 return loaded[field]
             raise KeyError(f"Field {field} not found in loaded data")
 
-        self._store(field, loaded)
+        self._cache[field] = loaded
+        self._add_cached_step(field)
         return loaded
 
     def discard(self, field):
