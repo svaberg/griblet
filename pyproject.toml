@@ -21,6 +21,7 @@ dev = [
     "build",
     "pint",
     "pytest",
+    "pytest-cov",
     "numpy",
     "networkx",
     "matplotlib",

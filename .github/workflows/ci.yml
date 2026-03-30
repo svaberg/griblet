@@ -11,6 +11,8 @@ on:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    env:
+      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -22,7 +24,14 @@ jobs:
 
       - name: Run tests
         shell: bash -el {0}
-        run: conda run -n griblet python -m pytest
+        run: conda run -n griblet python -m pytest --cov=griblet --cov-report=xml:pytest-cobertura.xml
+
+      - name: Codacy Coverage Reporter
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master' && env.CODACY_PROJECT_TOKEN != ''
+        uses: codacy/codacy-coverage-reporter-action@v1.3.0
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: pytest-cobertura.xml
 
       - name: Build package
         shell: bash -el {0}
