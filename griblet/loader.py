@@ -76,15 +76,11 @@ class BaseLoader:
             )
         return graph
 
-    def _field_summary(self):
-        """Return a short comma-separated summary of the available fields."""
-        return ", ".join(sorted(self._fields)) or "-"
-
     def __str__(self):
         """Summarize the loader and the fields it can provide."""
         return "\n".join([
             type(self).__name__,
-            f"  fields: {self._field_summary()}",
+            f"  fields: {', '.join(sorted(self._fields)) or '-'}",
         ])
 
 
@@ -96,9 +92,9 @@ class BlockLoader(BaseLoader):
         cached steps for every field in the block.
     """
 
-    def __init__(self, file_handle: Dict[str, Any], load_cost=1.0, cached_cost=0.05):
+    def __init__(self, file_handle: Dict[str, Any], load_cost=1.0):
         """
-        Store the backing mapping and the costs before and after caching.
+        Store the backing mapping and the loader cost for block access.
 
         `file_handle` is any mapping from field names to values.
         """
@@ -106,7 +102,6 @@ class BlockLoader(BaseLoader):
         self._fields = file_handle
         self._loaded = False
         self.load_cost = load_cost
-        self.cached_cost = cached_cost
 
     def load(self, field: str) -> Any:
         """
@@ -139,16 +134,14 @@ class BlockLoader(BaseLoader):
             graph,
             self,
             load_cost=self.load_cost if cost is None else cost,
-            cached_cost=self.cached_cost,
         )
         return graph
 
     def __str__(self):
-        """Summarize the block loader state, fields, and cost model."""
+        """Summarize the block loader state, fields, and load cost."""
         return "\n".join([
             type(self).__name__,
-            f"  fields: {self._field_summary()}",
+            f"  fields: {', '.join(sorted(self._fields)) or '-'}",
             f"  state: {'loaded' if self._loaded else 'not loaded'}",
             f"  load cost: {self.load_cost}",
-            f"  cached cost: {self.cached_cost}",
         ])

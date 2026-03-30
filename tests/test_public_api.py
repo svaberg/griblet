@@ -196,14 +196,13 @@ def test_base_loader_str_lists_fields():
 
 
 def test_block_loader_str_reports_state_and_costs():
-    loader = BlockLoader({"x": 4, "y": 5}, load_cost=3.0, cached_cost=0.2)
+    loader = BlockLoader({"x": 4, "y": 5}, load_cost=3.0)
 
     assert str(loader) == "\n".join([
         "BlockLoader",
         "  fields: x, y",
         "  state: not loaded",
         "  load cost: 3.0",
-        "  cached cost: 0.2",
     ])
 
     loader.load("x")
@@ -270,7 +269,7 @@ def test_cache_logs_miss_hit_and_bulk_load(caplog):
 
 
 def test_block_loader_logs_block_load(caplog):
-    loader = BlockLoader({"x": 4, "y": 5}, load_cost=3.0, cached_cost=0.2)
+    loader = BlockLoader({"x": 4, "y": 5}, load_cost=3.0)
 
     with caplog.at_level(logging.DEBUG):
         assert loader.load("x") == {"x": 4, "y": 5}
@@ -333,10 +332,10 @@ def test_base_loader_as_graph_supports_fixed_cost_override():
 
 
 def test_block_loader_exports_work_as_a_graph():
-    graph = BlockLoader({"x": 4, "y": 5}, load_cost=3.0, cached_cost=0.2).as_graph()
+    graph = BlockLoader({"x": 4, "y": 5}, load_cost=3.0).as_graph()
 
     path = Pathfinder(graph).find_path("x")
 
     assert path.cost == pytest.approx(3.0)
     assert graph.compute("x") == 4
-    assert graph.path("y").cost == pytest.approx(0.2)
+    assert graph.path("y").cost == pytest.approx(0.1)
