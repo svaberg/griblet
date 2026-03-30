@@ -5,12 +5,12 @@ import pint
 
 from griblet import Graph
 from griblet.cache import Cache
-from griblet.loader import BaseLoader
+from griblet.loader import Loader
 
 ureg = pint.UnitRegistry()
 
 
-class BoxLoader(BaseLoader):
+class BoxLoader(Loader):
     """Provide primitive box fields as direct source data."""
 
     def __init__(self):

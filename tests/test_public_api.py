@@ -2,12 +2,12 @@ import pytest
 
 from griblet import Graph, NoPathError
 from griblet.cache import Cache
-from griblet.loader import BaseLoader, BlockLoader
+from griblet.loader import Loader, BlockLoader
 from griblet.path import Path
 from griblet.pathfinder import Pathfinder
 
 
-class DemoLoader(BaseLoader):
+class DemoLoader(Loader):
     def __init__(self):
         super().__init__()
         self._fields = {"x": 2, "y": 3}

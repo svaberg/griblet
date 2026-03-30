@@ -15,7 +15,7 @@ from .graph import Graph
 logger = logging.getLogger(__name__)
 
 
-class BaseLoader:
+class Loader:
     """
     Minimal loader that exposes named source fields to a graph.
 
@@ -47,7 +47,7 @@ class BaseLoader:
         """
         Return the access cost for `field` in this loader.
 
-        The base implementation uses a small fixed cost for all known fields.
+        The default implementation uses a small fixed cost for all known fields.
         """
         if field not in self._fields:
             raise ValueError(f"Field '{field}' not found.")
@@ -84,7 +84,7 @@ class BaseLoader:
         ])
 
 
-class BlockLoader(BaseLoader):
+class BlockLoader(Loader):
     """
     Loader that reads a whole block at once and owns a graph cache.
 

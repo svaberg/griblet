@@ -4,7 +4,7 @@ import numpy as np
 
 from griblet import Graph
 from griblet.cache import Cache
-from griblet.loader import BaseLoader
+from griblet.loader import Loader
 
 _fallback_gamma = 5/3
 _mu_0 = 4e-7 * np.pi
@@ -12,7 +12,7 @@ _proton_mass = 1.67262192369e-27
 _boltzmann = 1.380649e-23
 
 
-class WindLoader(BaseLoader):
+class WindLoader(Loader):
     """
     Test loader, like the box demo: primitives only, plain numpy.
     Values here are placeholders just to make the graph runnable.
