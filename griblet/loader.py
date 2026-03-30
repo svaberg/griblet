@@ -49,9 +49,9 @@ class BaseLoader:
 
     def as_graph(self, cost: Optional[Union[float, Any]] = None):
         """
-        Expose each field as a zero-need way in a new Graph.
+        Expose each field as a zero-need step in a new Graph.
 
-        If `cost` is omitted, each graph way asks the loader for its current
+        If `cost` is omitted, each graph step asks the loader for its current
         field cost when evaluated. Passing a fixed `cost` overrides that
         dynamic behavior for all exported fields.
         """

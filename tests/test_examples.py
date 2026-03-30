@@ -31,11 +31,11 @@ def test_demo_rerouting_flow():
     path_1 = graph.path("volume")
     value_1 = graph.compute("volume")
 
-    graph.ways.pop("area", None)
+    graph.steps.pop("area", None)
     path_2 = graph.path("volume")
     value_2 = graph.compute("volume")
 
-    graph.ways.pop("length", None)
+    graph.steps.pop("length", None)
 
     assert value_1.to(ureg.meter**3).magnitude == pytest.approx([60.0])
     assert value_2.to(ureg.meter**3).magnitude == pytest.approx([60.0])

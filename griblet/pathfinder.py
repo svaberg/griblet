@@ -20,13 +20,13 @@ class NoPathError(Exception):
     """
 
 
-def _way_cost(way):
+def _step_cost(step):
     """
-    Resolve a way cost stored as either a number or a zero-argument callable.
+    Resolve a step cost stored as either a number or a zero-argument callable.
 
     This keeps dynamic cost functions and fixed costs on the same footing.
     """
-    cost = way["cost"]
+    cost = step["cost"]
     return cost() if callable(cost) else cost
 
 
@@ -45,28 +45,28 @@ def follow_path(path: Path, graph):
             logger.info("Cost change for %s: %s -> %s", node.name, prev, actual_cost)
 
     def follow_step(node: Step):
-        if node.way_index is None:
-            raise RuntimeError(f"No chosen way for {node.name}")
+        if node.step_index is None:
+            raise RuntimeError(f"No chosen step for {node.name}")
 
-        way = graph.ways[node.name][node.way_index]
-        cost_val = _way_cost(way)
+        step = graph.steps[node.name][node.step_index]
+        cost_val = _step_cost(step)
         logger.debug(
-            "Following %s via way %s with local cost %s",
+            "Following %s via step %s with local cost %s",
             node.name,
-            node.way_index,
+            node.step_index,
             cost_val,
         )
 
         if node.is_source:
             set_actual_cost(node, cost_val)
             logger.debug("Loaded source %s", node.name)
-            return way["func"]()
+            return step["func"]()
 
         values = [follow_step(need) for need in node.needs]
         total_cost = cost_val + sum(need.last_actual_cost for need in node.needs)
         set_actual_cost(node, total_cost)
         logger.debug("Computed %s with actual cost %s", node.name, total_cost)
-        return way["func"](*values)
+        return step["func"](*values)
 
     return follow_step(path.root)
 
@@ -114,20 +114,20 @@ class Pathfinder:
             logger.debug("Using memoized path to %s", target)
             return self.memo[target]
 
-        if target not in self.graph.ways:
+        if target not in self.graph.steps:
             raise KeyError(target)
 
         best_cost = float("inf")
         best_step = None
         trail.add(target)
 
-        for i, way in enumerate(self.graph.ways[target]):
-            needs = way["needs"]
+        for i, step in enumerate(self.graph.steps[target]):
+            needs = step["needs"]
             subpaths = []
-            cost_val = _way_cost(way)
+            cost_val = _step_cost(step)
             total = cost_val
             logger.debug(
-                "Trying way %d for %s with needs=%s and local cost=%s",
+                "Trying step %d for %s with needs=%s and local cost=%s",
                 i,
                 target,
                 needs,
@@ -139,7 +139,7 @@ class Pathfinder:
                 except (NoPathError, KeyError):
                     need_path = None
                 if need_path is None:
-                    logger.debug("Way %d for %s failed at need %s", i, target, need)
+                    logger.debug("Step %d for %s failed at need %s", i, target, need)
                     break
                 total += need_cost
                 subpaths.append(need_path)
@@ -149,13 +149,13 @@ class Pathfinder:
                     best_step = Step(
                         name=target,
                         cost=cost_val,
-                        way_index=i,
+                        step_index=i,
                         is_source=not needs,
                         needs=subpaths,
-                        metadata=way.get("metadata", {}),
+                        metadata=step.get("metadata", {}),
                     )
                     logger.debug(
-                        "Way %d is the new best path to %s with total cost %s",
+                        "Step %d is the new best path to %s with total cost %s",
                         i,
                         target,
                         total,
@@ -178,9 +178,9 @@ class Pathfinder:
         Raises
         ------
         KeyError
-            If the graph has no ways at all for `target`.
+            If the graph has no steps at all for `target`.
         NoPathError
-            If the graph knows `target`, but every way to reach it fails.
+            If the graph knows `target`, but every step reaching it fails.
         """
         path = Path(*self._find_path(target))
         logger.info("Found path to %s with total cost %s", target, path.cost)

@@ -89,7 +89,7 @@ def test_graph_add_copies_metadata():
     graph.add("x", lambda: 1, metadata=metadata)
     metadata["description"] = "mutated"
 
-    assert graph.ways["x"][0]["metadata"] == {"description": "source"}
+    assert graph.steps["x"][0]["metadata"] == {"description": "source"}
 
 
 def test_graph_merge_returns_self_and_keeps_all_ways():
@@ -101,7 +101,7 @@ def test_graph_merge_returns_self_and_keeps_all_ways():
     merged = left.merge(right)
 
     assert merged is left
-    assert len(left.ways["x"]) == 2
+    assert len(left.steps["x"]) == 2
 
 
 def test_graph_fields_only_lists_outputs():
@@ -120,7 +120,7 @@ def test_pathfinder_prefers_lower_total_cost():
     path = Pathfinder(graph).find_path("y")
 
     assert path.cost == pytest.approx(3.0)
-    assert path.root.way_index == 1
+    assert path.root.step_index == 1
     assert path.root.needs == []
 
 
@@ -285,8 +285,8 @@ def test_pathfinder_logs_failed_route_and_missing_path(caplog):
         with pytest.raises(NoPathError):
             Pathfinder(graph).find_path("y")
 
-    assert "Trying way 0 for y with needs=('x',) and local cost=1.0" in caplog.text
-    assert "Way 0 for y failed at need x" in caplog.text
+    assert "Trying step 0 for y with needs=('x',) and local cost=1.0" in caplog.text
+    assert "Step 0 for y failed at need x" in caplog.text
     assert "No path found to y" in caplog.text
 
 

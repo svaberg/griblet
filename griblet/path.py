@@ -25,7 +25,7 @@ class Step:
 
     name: str
     cost: float
-    way_index: Optional[int] = None
+    step_index: Optional[int] = None
     is_source: bool = False
     needs: List["Step"] = field(default_factory=list)
     metadata: Dict = field(default_factory=dict)
