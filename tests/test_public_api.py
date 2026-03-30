@@ -94,7 +94,7 @@ def test_graph_add_copies_metadata():
     graph.add("x", lambda: 1, metadata=metadata)
     metadata["description"] = "mutated"
 
-    assert graph.paths["x"][0].metadata == {"description": "source"}
+    assert graph.paths["x"][0][3] == {"description": "source"}
 
 
 def test_graph_merge_returns_self_and_keeps_all_paths():

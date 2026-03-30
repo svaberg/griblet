@@ -82,16 +82,15 @@ class Pathfinder:
         best_path = None
         trail.add(target)
 
-        for i, record in enumerate(self.graph.paths[target], 1):
-            needs = record.needs
+        for i, (needs, func, cost, metadata) in enumerate(self.graph.paths[target], 1):
             child_paths = []
-            total_cost = record.cost
+            total_cost = cost
             logger.debug(
                 "Trying path %d for %s with needs=%s and cost=%s",
                 i,
                 target,
                 needs,
-                record.cost,
+                cost,
             )
             for need in needs:
                 try:
@@ -108,10 +107,10 @@ class Pathfinder:
                     best_path = Path(
                         name=target,
                         cost=total_cost,
-                        func=record.func,
+                        func=func,
                         is_source=not needs,
                         needs=child_paths,
-                        metadata=dict(record.metadata),
+                        metadata=dict(metadata),
                     )
                     logger.debug(
                         "Path %d is the new best path to %s with total cost %s",
