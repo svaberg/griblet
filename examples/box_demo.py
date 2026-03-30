@@ -101,8 +101,6 @@ if __name__ == "__main__":
     graph = Graph()
     graph.merge(loader_graph)
     graph.merge(derived_graph)
-    print("\n=== Full Graph ===\n")
-    print(graph)
 
     path = graph.path("volume")
     print("\n=== Best Path to volume ===\n")
