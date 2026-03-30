@@ -10,7 +10,7 @@ from demo_box import BoxLoader, box_graph, ureg
 import plots
 
 
-def test_demo_best_path_flow():
+def test_box_demo_best_path_flow():
     graph = Graph()
     graph.merge(BoxLoader().as_graph())
     graph.merge(box_graph())
@@ -25,7 +25,7 @@ def test_demo_best_path_flow():
     assert value_second.to(ureg.meter**3).magnitude == pytest.approx(60.0)
 
 
-def test_demo_rerouting_flow():
+def test_box_demo_rerouting_flow():
     graph = Graph()
     graph.merge(BoxLoader().as_graph())
     graph.merge(box_graph())
