@@ -18,6 +18,8 @@ if __name__ == "__main__":
     val1 = graph.compute("volume")
     print(f"{'volume'}: {val1} (cost: {path1.cost:.2f})")
 
+    # Demo trick: the direct volume path was added last in box_graph(), so
+    # popping the last entry removes that one and forces a reroute via area.
     graph.paths["volume"].pop()
     path2 = graph.path("volume")
     val2 = graph.compute("volume")

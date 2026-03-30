@@ -103,6 +103,8 @@ if __name__ == "__main__":
     print("base_perimeter:", base_perimeter)
     print("linear_size:", linear_size)
 
+    # Demo trick: the direct volume path was added last in box_graph(), so
+    # popping the last entry removes that one and forces a reroute via area.
     graph.paths["volume"].pop()
     rerouted_path = graph.path("volume")
     rerouted_volume = graph.compute("volume")
