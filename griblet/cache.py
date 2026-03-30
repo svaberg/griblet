@@ -87,11 +87,6 @@ class Cache:
                 self._store(loaded_field, value)
             if field in loaded:
                 return loaded[field]
-            logger.warning(
-                "Loader %s did not provide requested field %s",
-                type(self.loader).__name__,
-                field,
-            )
             raise KeyError(f"Field {field} not found in loaded data")
 
         self._store(field, loaded)
