@@ -11,6 +11,7 @@ from griblet.cache import Cache
 from griblet.loader import Loader
 
 ureg = pint.UnitRegistry()
+BOX_DATA_PATH = Path(__file__).with_name("box_data.json")
 
 
 class BoxLoader(Loader):
@@ -18,7 +19,7 @@ class BoxLoader(Loader):
 
     def __init__(self):
         super().__init__()
-        raw_fields = json.loads(Path(__file__).with_name("box_data.json").read_text())
+        raw_fields = json.loads(BOX_DATA_PATH.read_text())
         self._fields = {
             name: np.array(spec["value"]) * ureg(spec["unit"])
             for name, spec in raw_fields.items()
