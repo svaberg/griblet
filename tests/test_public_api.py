@@ -94,7 +94,7 @@ def test_graph_add_copies_metadata():
     graph.add("x", lambda: 1, metadata=metadata)
     metadata["description"] = "mutated"
 
-    assert graph.ways["x"][0]["metadata"] == {"description": "source"}
+    assert graph.paths["x"][0]["metadata"] == {"description": "source"}
 
 
 def test_graph_merge_returns_self_and_keeps_all_ways():
@@ -106,7 +106,7 @@ def test_graph_merge_returns_self_and_keeps_all_ways():
     merged = left.merge(right)
 
     assert merged is left
-    assert len(left.ways["x"]) == 2
+    assert len(left.paths["x"]) == 2
 
 
 def test_graph_fields_only_lists_outputs():
@@ -125,7 +125,7 @@ def test_pathfinder_prefers_lower_total_cost():
     path = Pathfinder(graph).find_path("y")
 
     assert path.cost == pytest.approx(3.0)
-    assert path.way_index == 1
+    assert path.local_cost == pytest.approx(3.0)
     assert path.needs == []
 
 
@@ -290,30 +290,16 @@ def test_pathfinder_logs_failed_route_and_missing_path(caplog):
         with pytest.raises(NoPathError):
             Pathfinder(graph).find_path("y")
 
-    assert "Trying way 0 for y with needs=('x',) and local cost=1.0" in caplog.text
-    assert "Way 0 for y failed at need x" in caplog.text
+    assert "Trying path 0 for y with needs=('x',) and local cost=1.0" in caplog.text
+    assert "Path 0 for y failed at need x" in caplog.text
     assert "No path found to y" in caplog.text
-
-
-def test_compute_path_logs_cost_change(caplog):
-    graph = Graph()
-    cost = [1.0]
-    graph.add("x", lambda: 2, cost=lambda: cost[0])
-    path = graph.path("x")
-
-    with caplog.at_level(logging.INFO):
-        assert graph.compute(path) == 2
-        cost[0] = 2.0
-        assert graph.compute(path) == 2
-
-    assert "Cost change for x: 1.0 -> 2.0" in caplog.text
 
 
 def test_cache_adds_cached_way_after_scalar_load():
     graph = Graph()
     cache = Cache(graph, ScalarCacheLoader(), load_cost=9.0, cached_cost=0.5)
 
-    assert len(graph.ways["x"]) == 1
+    assert len(graph.paths["x"]) == 1
     assert graph.path("x").cost == pytest.approx(9.0)
     assert cache.load("x") == 7
     assert graph.path("x").cost == pytest.approx(0.5)

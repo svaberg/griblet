@@ -1,7 +1,7 @@
 """Recursive path representation for resolved graphs."""
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 
 @dataclass
@@ -17,10 +17,8 @@ class Path:
         Name produced at this node.
     cost:
         Total declared cost of this path, including all child paths.
-    way_index:
-        Index of the chosen graph way used at this node.
-    is_source:
-        Whether this path node has no dependencies.
+    func:
+        Callable used to compute this node once its child paths are available.
     needs:
         Child paths that must be evaluated first.
     last_actual_cost:
@@ -29,11 +27,12 @@ class Path:
 
     name: str
     cost: float
-    way_index: Optional[int] = None
+    func: Callable
     is_source: bool = False
     needs: List["Path"] = field(default_factory=list)
     metadata: Dict = field(default_factory=dict)
     last_actual_cost: Optional[float] = None
+    _record: Optional[Dict] = field(default=None, repr=False)
 
     @property
     def local_cost(self):
@@ -42,7 +41,7 @@ class Path:
 
     def _format_lines(self, indent=0):
         """
-        Render this path node and its dependencies as an indented tree of lines.
+        Render this path and its dependencies as an indented tree of lines.
 
         This is the internal formatter used by `__str__`.
         """

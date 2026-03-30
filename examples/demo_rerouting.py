@@ -14,12 +14,12 @@ if __name__ == "__main__":
     val1 = graph.compute("volume")
     print(f"{'volume'}: {val1} (cost: {path1.cost:.2f})")
 
-    graph.ways.pop("area", None)
+    graph.paths.pop("area", None)
     path2 = graph.path("volume")
     val2 = graph.compute("volume")
     print(f"{'volume'}: {val2} (cost: {path2.cost:.2f})")
 
-    graph.ways.pop("length", None)
+    graph.paths.pop("length", None)
     try:
         path3 = graph.path("volume")
         val3 = graph.compute("volume")

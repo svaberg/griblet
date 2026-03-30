@@ -18,17 +18,7 @@ class NoPathError(Exception):
     """
 
 
-def _way_cost(way):
-    """
-    Resolve a way cost stored as either a number or a zero-argument callable.
-
-    This keeps dynamic cost functions and fixed costs on the same footing.
-    """
-    cost = way["cost"]
-    return cost() if callable(cost) else cost
-
-
-def follow_path(path: Path, graph):
+def follow_path(path: Path):
     """
     Evaluate a resolved path and record the actual cost paid at each node.
 
@@ -38,34 +28,21 @@ def follow_path(path: Path, graph):
     """
 
     def set_actual_cost(node: Path, actual_cost: float):
-        prev = node.last_actual_cost
         node.last_actual_cost = actual_cost
-        if prev is not None and prev != actual_cost:
-            logger.info("Cost change for %s: %s -> %s", node.name, prev, actual_cost)
 
     def follow(node: Path):
-        if node.way_index is None:
-            raise RuntimeError(f"No chosen way for {node.name}")
-
-        way = graph.ways[node.name][node.way_index]
-        local_cost = _way_cost(way)
-        logger.debug(
-            "Following %s via way %s with local cost %s",
-            node.name,
-            node.way_index,
-            local_cost,
-        )
-
+        local_cost = node.local_cost
+        logger.debug("Following %s with local cost %s", node.name, local_cost)
         if node.is_source:
             set_actual_cost(node, local_cost)
             logger.debug("Loaded source %s", node.name)
-            return way["func"]()
+            return node.func()
 
         values = [follow(need) for need in node.needs]
         total_cost = local_cost + sum(need.last_actual_cost for need in node.needs)
         set_actual_cost(node, total_cost)
         logger.debug("Computed %s with actual cost %s", node.name, total_cost)
-        return way["func"](*values)
+        return node.func(*values)
 
     return follow(path)
 
@@ -94,7 +71,7 @@ class Pathfinder:
 
     def _find_path(self, target: str, trail: Optional[Set[str]] = None) -> Optional[Path]:
         """
-        Return the cheapest path to `target`, or `None` if no path works.
+        Return the cheapest path to `target`, or fail if no path works.
 
         This is the recursive worker behind `find_path`.
         """
@@ -108,23 +85,22 @@ class Pathfinder:
             logger.debug("Using memoized path to %s", target)
             return self.memo[target]
 
-        if target not in self.graph.ways:
+        if target not in self.graph.paths:
             raise KeyError(target)
 
         best_path = None
         trail.add(target)
 
-        for i, way in enumerate(self.graph.ways[target]):
-            needs = way["needs"]
+        for i, record in enumerate(self.graph.paths[target]):
+            needs = record["needs"]
             child_paths = []
-            local_cost = _way_cost(way)
-            total_cost = local_cost
+            total_cost = record["cost"]
             logger.debug(
-                "Trying way %d for %s with needs=%s and local cost=%s",
+                "Trying path %d for %s with needs=%s and local cost=%s",
                 i,
                 target,
                 needs,
-                local_cost,
+                record["cost"],
             )
             for need in needs:
                 try:
@@ -132,7 +108,7 @@ class Pathfinder:
                 except (NoPathError, KeyError):
                     need_path = None
                 if need_path is None:
-                    logger.debug("Way %d for %s failed at need %s", i, target, need)
+                    logger.debug("Path %d for %s failed at need %s", i, target, need)
                     break
                 total_cost += need_path.cost
                 child_paths.append(need_path)
@@ -141,13 +117,14 @@ class Pathfinder:
                     best_path = Path(
                         name=target,
                         cost=total_cost,
-                        way_index=i,
+                        func=record["func"],
                         is_source=not needs,
                         needs=child_paths,
-                        metadata=way.get("metadata", {}),
+                        metadata=record.get("metadata", {}),
+                        _record=record,
                     )
                     logger.debug(
-                        "Way %d is the new best path to %s with total cost %s",
+                        "Path %d is the new best path to %s with total cost %s",
                         i,
                         target,
                         total_cost,
@@ -169,9 +146,9 @@ class Pathfinder:
         Raises
         ------
         KeyError
-            If the graph has no ways at all for `target`.
+            If the graph has no paths at all for `target`.
         NoPathError
-            If the graph knows `target`, but every way to reach it fails.
+            If the graph knows `target`, but every path to reach it fails.
         """
         path = self._find_path(target)
         logger.info("Found path to %s with total cost %s", target, path.cost)

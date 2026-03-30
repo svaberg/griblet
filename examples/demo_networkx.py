@@ -32,7 +32,7 @@ def plot_networkx_graph(loader, ways_graph, filename, *, target="volume", rerout
 
         rerouted_graph = Graph(loader.as_graph())
         rerouted_graph.merge(ways_graph)
-        rerouted_graph.ways.pop(reroute_key, None)
+        rerouted_graph.paths.pop(reroute_key, None)
         path2 = rerouted_graph.path(target)
 
         fig, ax = plt.subplots(figsize=(fig_width, fig_height))

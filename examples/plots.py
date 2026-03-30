@@ -17,12 +17,12 @@ Y_PADDING = 1.5
 
 def field_ordinal_levels(comp_graph, direction="out_to_dep"):
     field_graph = nx.DiGraph()
-    for out, ways in comp_graph.ways.items():
+    for out, paths in comp_graph.paths.items():
         field_graph.add_node(out)
-        for way in ways:
-            if not way["needs"]:
+        for path in paths:
+            if not path["needs"]:
                 continue
-            for need in way["needs"]:
+            for need in path["needs"]:
                 field_graph.add_node(need)
                 if direction == "out_to_dep":
                     field_graph.add_edge(out, need)
@@ -57,12 +57,12 @@ def and_or_graph(computation_graph):
     """
     graph = nx.DiGraph()
 
-    for out, ways in computation_graph.ways.items():
+    for out, paths in computation_graph.paths.items():
         field_node = ("F", out)
         graph.add_node(field_node, kind="field", field=out, label=out)
 
-        for index, way in enumerate(ways):
-            if not way["needs"]:
+        for index, path in enumerate(paths):
+            if not path["needs"]:
                 continue
 
             recipe_node = ("R", out, index)
@@ -75,7 +75,7 @@ def and_or_graph(computation_graph):
             )
             graph.add_edge(field_node, recipe_node, kind="alt")
 
-            for need in way["needs"]:
+            for need in path["needs"]:
                 need_field = ("F", need)
                 graph.add_node(need_field, kind="field", field=need, label=need)
                 graph.add_edge(recipe_node, need_field, kind="req")
@@ -104,15 +104,15 @@ def _and_or_layout(computation_graph, graph):
                 y_gap * (center - index),
             )
 
-    for out, ways in sorted(computation_graph.ways.items(), key=lambda item: str(item[0])):
+    for out, paths in sorted(computation_graph.paths.items(), key=lambda item: str(item[0])):
         field_node = ("F", out)
         if field_node not in pos:
             continue
 
         plotted_recipe_indices = [
             index
-            for index, way in enumerate(ways)
-            if way["needs"] and ("R", out, index) in graph
+            for index, path in enumerate(paths)
+            if path["needs"] and ("R", out, index) in graph
         ]
         if not plotted_recipe_indices:
             continue
@@ -394,7 +394,7 @@ def _draw_and_or_base(
     return graph, pos
 
 
-def _collect_path_display_nodes_edges(path):
+def _collect_path_display_nodes_edges(computation_graph, path):
     nodes = set()
     edges = set()
 
@@ -405,10 +405,10 @@ def _collect_path_display_nodes_edges(path):
         if node.is_source or not node.needs:
             return
 
-        if node.way_index is None:
-            raise RuntimeError(f"No chosen way for path node {node.name!r}")
+        if node._record is None:
+            raise RuntimeError(f"No chosen graph record for path node {node.name!r}")
 
-        recipe_node = ("R", node.name, node.way_index)
+        recipe_node = ("R", node.name, computation_graph.paths[node.name].index(node._record))
         nodes.add(recipe_node)
         edges.add((recipe_node, field_node))
 
@@ -446,7 +446,7 @@ def plot_computation_paths(
 ):
     graph = and_or_graph(computation_graph)
     path_nodes_edges = [
-        _collect_path_display_nodes_edges(tree)
+        _collect_path_display_nodes_edges(computation_graph, tree)
         for tree in trees
     ]
 

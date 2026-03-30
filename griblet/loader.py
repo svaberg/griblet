@@ -54,9 +54,9 @@ class BaseLoader:
 
     def as_graph(self, cost: Optional[Union[float, Any]] = None):
         """
-        Expose each field as a zero-need way in a new Graph.
+        Expose each field as a zero-need path in a new Graph.
 
-        If `cost` is omitted, each graph way uses the loader's declared access
+        If `cost` is omitted, each graph path uses the loader's declared access
         cost at graph construction time. Passing a fixed `cost` overrides that
         value for all exported fields.
         """
@@ -67,11 +67,11 @@ class BaseLoader:
             type(self).__name__,
         )
         for name in self.fields():
-            way_cost = self.cost(name) if cost is None else cost
+            path_cost = self.cost(name) if cost is None else cost
             graph.add(
                 name,
                 lambda name=name: self.load(name),
-                cost=way_cost,
+                cost=path_cost,
                 metadata={"description": type(self).__name__},
             )
         return graph
@@ -92,8 +92,8 @@ class BlockLoader(BaseLoader):
     """
     Loader that reads a whole block at once and can be wrapped by a Cache.
 
-    The first load returns the full block so a wrapping Cache can add cheap
-    cached ways for every field in the block.
+        The first load returns the full block so a wrapping Cache can add cheap
+        cached paths for every field in the block.
     """
 
     def __init__(self, file_handle: Dict[str, Any], load_cost=1.0, cached_cost=0.05):
@@ -113,7 +113,7 @@ class BlockLoader(BaseLoader):
         Load the whole block on first access.
 
         The first field request returns the full block so a Cache can register
-        cached ways for every field that became available together.
+        cached paths for every field that became available together.
         """
         if not self._loaded:
             logger.info(
