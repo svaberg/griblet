@@ -155,6 +155,6 @@ class Graph:
                 meta_str = ", ".join(f"{k}={v}" for k, v in step.metadata.items())
                 lines.append(
                     f"  Step {i}: needs={step.needs}, cost={step.cost}"
-                    + (f", meta={meta_str}" if meta_str else "")
+                    + (f", {meta_str}" if meta_str else "")
                 )
         return "\n".join(lines)
