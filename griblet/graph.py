@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import logging
 
 from .path import Path
+from .pathfinder import Pathfinder, follow_path
 
 
 logger = logging.getLogger(__name__)
@@ -92,8 +93,6 @@ class Graph:
         NoPathError
             If `name` is known, but none of its paths can be completed.
         """
-        from .pathfinder import Pathfinder
-
         logger.info("Finding path to %s", name)
         path = Pathfinder(self).find_path(name)
         logger.debug("Chosen path for %s:\n%s", name, path)
@@ -115,8 +114,6 @@ class Graph:
         TypeError
             If `target` is neither a name nor a Path.
         """
-        from .pathfinder import follow_path
-
         if isinstance(target, Path):
             path = target
         elif isinstance(target, str):
