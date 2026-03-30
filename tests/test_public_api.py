@@ -56,7 +56,6 @@ def test_pathfinder_returns_path():
 
     assert isinstance(path, Path)
     assert path.cost == pytest.approx(3.0)
-    assert path.local_cost == pytest.approx(2.0)
     assert graph.compute("y") == 3
 
 
@@ -125,7 +124,6 @@ def test_pathfinder_prefers_lower_total_cost():
     path = Pathfinder(graph).find_path("y")
 
     assert path.cost == pytest.approx(3.0)
-    assert path.local_cost == pytest.approx(3.0)
     assert path.needs == []
 
 
@@ -158,7 +156,7 @@ def test_path_str_reports_total_cost_and_tree():
     explanation = str(graph.path("y"))
 
     assert explanation.startswith("Path to y (total cost: 3.0)\n")
-    assert "y (cost: 2.0)" in explanation
+    assert "y (cost: 3.0)" in explanation
     assert "x (cost: 1.0) [source]" in explanation
 
 

@@ -31,11 +31,6 @@ class Path:
     metadata: Dict = field(default_factory=dict)
     _record: Optional[Dict] = field(default=None, repr=False)
 
-    @property
-    def local_cost(self):
-        """Return the declared local cost at this node."""
-        return self.cost - sum(need.cost for need in self.needs)
-
     def _format_lines(self, indent=0):
         """
         Render this path and its dependencies as an indented tree of lines.
@@ -45,7 +40,7 @@ class Path:
         leaf = " [source]" if self.is_source else ""
         desc = self.metadata.get("description", "")
         unit = self.metadata.get("unit", "")
-        line = " " * indent + f"{self.name} (cost: {self.local_cost}){leaf} {desc} {unit}".rstrip()
+        line = " " * indent + f"{self.name} (cost: {self.cost}){leaf} {desc} {unit}".rstrip()
         lines = [line]
         for need in self.needs:
             lines.extend(need._format_lines(indent + 4))

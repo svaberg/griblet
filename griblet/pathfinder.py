@@ -26,7 +26,7 @@ def follow_path(path: Path):
     """
 
     def follow(node: Path):
-        local_cost = node.local_cost
+        local_cost = node._record["cost"]
         logger.debug("Following %s with local cost %s", node.name, local_cost)
         if node.is_source:
             logger.debug("Loaded source %s", node.name)
