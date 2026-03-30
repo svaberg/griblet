@@ -1,5 +1,6 @@
 """Graph of paths to reach data."""
 
+from dataclasses import dataclass
 import logging
 
 from .path import Path
@@ -8,11 +9,21 @@ from .path import Path
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class Step:
+    """One local graph step for reaching a field."""
+
+    needs: tuple
+    func: object
+    cost: float
+    metadata: dict
+
+
 class Graph:
     """
     Registry of all known paths that derive named data.
 
-    Each output name can have more than one local graph path to reach it.
+    Each output name can have more than one local graph step to reach it.
     """
 
     def __init__(self, other_graph=None):
@@ -23,7 +34,7 @@ class Graph:
 
     def add(self, name, func, *, needs=None, cost=1.0, metadata=None):
         """
-        Register one path that produces `name`.
+        Register one graph step that produces `name`.
 
         Parameters
         ----------
@@ -40,9 +51,11 @@ class Graph:
         """
         needs = tuple(needs or ())
         metadata = dict(metadata or {})
-        self.paths.setdefault(name, []).append((needs, func, cost, metadata))
+        self.paths.setdefault(name, []).append(
+            Step(needs=needs, func=func, cost=cost, metadata=metadata)
+        )
         logger.debug(
-            "Added path %d for %s with needs=%s and cost=%s",
+            "Added step %d for %s with needs=%s and cost=%s",
             len(self.paths[name]),
             name,
             needs,
@@ -51,15 +64,15 @@ class Graph:
 
     def merge(self, other):
         """
-        Copy all paths from `other` into this graph and return `self`.
+        Copy all steps from `other` into this graph and return `self`.
 
-        This is an additive merge: existing paths are kept, and the paths from
+        This is an additive merge: existing paths are kept, and the steps from
         `other` are appended alongside them.
         """
         for name, paths in other.paths.items():
             self.paths.setdefault(name, []).extend(paths)
         logger.debug(
-            "Merged %d path(s) across %d field(s)",
+            "Merged %d step(s) across %d field(s)",
             sum(map(len, other.paths.values())),
             len(other.paths),
         )
@@ -127,17 +140,17 @@ class Graph:
 
     def __str__(self):
         """
-        Summarize the graph as fields followed by their registered paths.
+        Summarize the graph as fields followed by their registered steps.
 
         This is meant for inspection, not for round-tripping or serialization.
         """
         lines = []
         for name in sorted(self.paths):
             lines.append(f"{name}:")
-            for i, (needs, _func, cost, metadata) in enumerate(self.paths[name], 1):
-                meta_str = ", ".join(f"{k}={v}" for k, v in metadata.items())
+            for i, step in enumerate(self.paths[name], 1):
+                meta_str = ", ".join(f"{k}={v}" for k, v in step.metadata.items())
                 lines.append(
-                    f"  Path {i}: needs={needs}, cost={cost}"
+                    f"  Step {i}: needs={step.needs}, cost={step.cost}"
                     + (f", meta={meta_str}" if meta_str else "")
                 )
         return "\n".join(lines)

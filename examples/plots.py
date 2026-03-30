@@ -19,10 +19,10 @@ def field_ordinal_levels(comp_graph, direction="out_to_dep"):
     field_graph = nx.DiGraph()
     for out, paths in comp_graph.paths.items():
         field_graph.add_node(out)
-        for needs, _func, _cost, _metadata in paths:
-            if not needs:
+        for step in paths:
+            if not step.needs:
                 continue
-            for need in needs:
+            for need in step.needs:
                 field_graph.add_node(need)
                 if direction == "out_to_dep":
                     field_graph.add_edge(out, need)
@@ -61,8 +61,8 @@ def and_or_graph(computation_graph):
         field_node = ("F", out)
         graph.add_node(field_node, kind="field", field=out, label=out)
 
-        for index, (needs, _func, _cost, _metadata) in enumerate(paths):
-            if not needs:
+        for index, step in enumerate(paths):
+            if not step.needs:
                 continue
 
             recipe_node = ("R", out, index)
@@ -75,7 +75,7 @@ def and_or_graph(computation_graph):
             )
             graph.add_edge(field_node, recipe_node, kind="alt")
 
-            for need in needs:
+            for need in step.needs:
                 need_field = ("F", need)
                 graph.add_node(need_field, kind="field", field=need, label=need)
                 graph.add_edge(recipe_node, need_field, kind="req")
@@ -111,8 +111,8 @@ def _and_or_layout(computation_graph, graph):
 
         plotted_recipe_indices = [
             index
-            for index, (needs, _func, _cost, _metadata) in enumerate(paths)
-            if needs and ("R", out, index) in graph
+            for index, step in enumerate(paths)
+            if step.needs and ("R", out, index) in graph
         ]
         if not plotted_recipe_indices:
             continue
@@ -397,14 +397,14 @@ def _draw_and_or_base(
 def _path_index_in_graph(computation_graph, path):
     child_names = tuple(need.name for need in path.needs)
     child_cost = sum(need.cost for need in path.needs)
-    for index, (needs, func, cost, metadata) in enumerate(computation_graph.paths[path.name]):
-        if func is not path.func:
+    for index, step in enumerate(computation_graph.paths[path.name]):
+        if step.func is not path.func:
             continue
-        if needs != child_names:
+        if step.needs != child_names:
             continue
-        if metadata != path.metadata:
+        if step.metadata != path.metadata:
             continue
-        if abs((cost + child_cost) - path.cost) > 1e-12:
+        if abs((step.cost + child_cost) - path.cost) > 1e-12:
             continue
         return index
     raise RuntimeError(f"No graph path matches resolved path node {path.name!r}")

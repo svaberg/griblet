@@ -93,7 +93,7 @@ class BlockLoader(BaseLoader):
     Loader that reads a whole block at once and can be wrapped by a Cache.
 
         The first load returns the full block so a wrapping Cache can add cheap
-        cached paths for every field in the block.
+        cached steps for every field in the block.
     """
 
     def __init__(self, file_handle: Dict[str, Any], load_cost=1.0, cached_cost=0.05):
@@ -113,7 +113,7 @@ class BlockLoader(BaseLoader):
         Load the whole block on first access.
 
         The first field request returns the full block so a Cache can register
-        cached paths for every field that became available together.
+        cached steps for every field that became available together.
         """
         if not self._loaded:
             logger.info(

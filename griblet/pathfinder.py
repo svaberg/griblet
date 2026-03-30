@@ -82,15 +82,16 @@ class Pathfinder:
         best_path = None
         trail.add(target)
 
-        for i, (needs, func, cost, metadata) in enumerate(self.graph.paths[target], 1):
+        for i, step in enumerate(self.graph.paths[target], 1):
+            needs = step.needs
             child_paths = []
-            total_cost = cost
+            total_cost = step.cost
             logger.debug(
-                "Trying path %d for %s with needs=%s and cost=%s",
+                "Trying step %d for %s with needs=%s and cost=%s",
                 i,
                 target,
                 needs,
-                cost,
+                step.cost,
             )
             for need in needs:
                 try:
@@ -98,7 +99,7 @@ class Pathfinder:
                 except (NoPathError, KeyError):
                     need_path = None
                 if need_path is None:
-                    logger.debug("Path %d for %s failed at need %s", i, target, need)
+                    logger.debug("Step %d for %s failed at need %s", i, target, need)
                     break
                 total_cost += need_path.cost
                 child_paths.append(need_path)
@@ -107,13 +108,13 @@ class Pathfinder:
                     best_path = Path(
                         name=target,
                         cost=total_cost,
-                        func=func,
+                        func=step.func,
                         is_source=not needs,
                         needs=child_paths,
-                        metadata=dict(metadata),
+                        metadata=dict(step.metadata),
                     )
                     logger.debug(
-                        "Path %d is the new best path to %s with total cost %s",
+                        "Step %d is the new best path to %s with total cost %s",
                         i,
                         target,
                         total_cost,
