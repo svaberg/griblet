@@ -2,6 +2,7 @@ import numpy as np
 import pint
 
 from griblet import Graph
+from griblet.cache import Cache
 from griblet.loader import BaseLoader
 
 ureg = pint.UnitRegistry()
@@ -40,4 +41,6 @@ def make_box_graph():
 
 
 def build_box_graph():
-    return Graph(BoxLoader().as_graph()).merge(make_box_graph())
+    graph = make_box_graph()
+    Cache(graph, BoxLoader(), cached_cost=0.05)
+    return graph

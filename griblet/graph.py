@@ -1,56 +1,57 @@
-"""Graph of steps that reach data."""
+"""Graph of ways to reach data."""
 
 import logging
 
 from .path import Path
+
 
 logger = logging.getLogger(__name__)
 
 
 class Graph:
     """
-    Registry of all known steps that derive named data.
+    Registry of all known ways to derive named data.
 
-    Each output name can have more than one step that reaches it. A step consists of
+    Each output name can have more than one way to reach it. A way consists of
     the function to call, the names it needs, its cost, and optional metadata
     used for display.
     """
 
     def __init__(self, other_graph=None):
-        """Start an empty graph, optionally seeded with another graph's steps."""
-        self.steps = {}
+        """Start an empty graph, optionally seeded with another graph's ways."""
+        self.ways = {}
         if other_graph is not None:
             self.merge(other_graph)
 
     def add(self, name, func, *, needs=None, cost=1.0, metadata=None):
         """
-        Register one step that produces `name`.
+        Register one way to produce `name`.
 
         Parameters
         ----------
         name:
-            Output name produced by this step.
+            Output name produced by this way.
         func:
-            Callable used when this step is followed.
+            Callable used when this way is followed.
         needs:
             Names that must be available before `func` can be called.
         cost:
             Numeric cost, or a zero-argument callable returning the current
-            cost, used when comparing alternative steps.
+            cost, used when comparing alternative ways.
         metadata:
             Optional display metadata such as descriptions or units.
         """
         needs = tuple(needs or ())
         metadata = dict(metadata or {})
-        self.steps.setdefault(name, []).append({
+        self.ways.setdefault(name, []).append({
             "needs": needs,
             "func": func,
             "cost": cost,
             "metadata": metadata,
         })
         logger.debug(
-            "Added step %d for %s with needs=%s and cost=%s",
-            len(self.steps[name]),
+            "Added way %d for %s with needs=%s and cost=%s",
+            len(self.ways[name]),
             name,
             needs,
             "callable" if callable(cost) else cost,
@@ -58,17 +59,17 @@ class Graph:
 
     def merge(self, other):
         """
-        Copy all steps from `other` into this graph and return `self`.
+        Copy all ways from `other` into this graph and return `self`.
 
-        This is an additive merge: existing steps are kept, and the steps from
+        This is an additive merge: existing ways are kept, and the ways from
         `other` are appended alongside them.
         """
-        for name, steps in other.steps.items():
-            self.steps.setdefault(name, []).extend(steps)
+        for name, ways in other.ways.items():
+            self.ways.setdefault(name, []).extend(ways)
         logger.debug(
-            "Merged %d step(s) across %d field(s)",
-            sum(map(len, other.steps.values())),
-            len(other.steps),
+            "Merged %d way(s) across %d field(s)",
+            sum(map(len, other.ways.values())),
+            len(other.ways),
         )
         return self
 
@@ -82,9 +83,9 @@ class Graph:
         Raises
         ------
         KeyError
-            If the graph has no steps at all for `name`.
+            If the graph has no ways at all for `name`.
         NoPathError
-            If `name` is known, but none of its steps can be completed.
+            If `name` is known, but none of its ways can be completed.
         """
         from .pathfinder import Pathfinder
 
@@ -118,35 +119,35 @@ class Graph:
         else:
             raise TypeError("compute() takes a field name or a Path")
 
-        logger.info("Computing %s", path.root.name)
+        logger.info("Computing %s", path.name)
         value = follow_path(path, self)
-        logger.info("Computed %s with total cost %s", path.root.name, path.cost)
+        logger.info("Computed %s with total cost %s", path.name, path.cost)
         return value
 
     def fields(self):
         """
-        Return the output names for which the graph has at least one step.
+        Return the output names for which the graph has at least one way.
 
         These are the names this graph knows how to produce, not necessarily
         the names that are reachable from every source configuration.
         """
-        return set(self.steps)
+        return set(self.ways)
 
     def __str__(self):
         """
-        Summarize the graph as fields followed by their registered steps.
+        Summarize the graph as fields followed by their registered ways.
 
         This is meant for inspection, not for round-tripping or serialization.
         """
         lines = []
-        for name in sorted(self.steps):
+        for name in sorted(self.ways):
             lines.append(f"{name}:")
-            for i, step in enumerate(self.steps[name], 1):
-                cost = step["cost"]
+            for i, way in enumerate(self.ways[name], 1):
+                cost = way["cost"]
                 cost_str = "callable" if callable(cost) else cost
-                meta_str = ", ".join(f"{k}={v}" for k, v in step["metadata"].items())
+                meta_str = ", ".join(f"{k}={v}" for k, v in way["metadata"].items())
                 lines.append(
-                    f"  Step {i}: needs={step['needs']}, cost={cost_str}"
+                    f"  Way {i}: needs={way['needs']}, cost={cost_str}"
                     + (f", meta={meta_str}" if meta_str else "")
                 )
         return "\n".join(lines)

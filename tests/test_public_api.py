@@ -5,7 +5,7 @@ import pytest
 from griblet import Graph, NoPathError
 from griblet.cache import Cache
 from griblet.loader import BaseLoader, BlockLoader
-from griblet.path import Path, Step
+from griblet.path import Path
 from griblet.pathfinder import Pathfinder
 
 
@@ -22,6 +22,9 @@ class ScalarCacheLoader:
     def __init__(self):
         self.calls = 0
 
+    def fields(self):
+        return ("x",)
+
     def load(self, field):
         self.calls += 1
         return 7
@@ -30,6 +33,9 @@ class ScalarCacheLoader:
 class BulkCacheLoader:
     def __init__(self):
         self.calls = 0
+
+    def fields(self):
+        return ("x", "y")
 
     def load(self, field):
         self.calls += 1
@@ -49,9 +55,8 @@ def test_pathfinder_returns_path():
     path = Pathfinder(graph).find_path("y")
 
     assert isinstance(path, Path)
-    assert isinstance(path.root, Step)
     assert path.cost == pytest.approx(3.0)
-    assert path.root.cost == pytest.approx(2.0)
+    assert path.local_cost == pytest.approx(2.0)
     assert graph.compute("y") == 3
 
 
@@ -64,7 +69,7 @@ def test_graph_path_returns_path():
 
     assert isinstance(path, Path)
     assert path.cost == pytest.approx(3.0)
-    assert path.root.name == "y"
+    assert path.name == "y"
 
 
 def test_pathfinder_raises_keyerror_for_missing_targets():
@@ -89,7 +94,7 @@ def test_graph_add_copies_metadata():
     graph.add("x", lambda: 1, metadata=metadata)
     metadata["description"] = "mutated"
 
-    assert graph.steps["x"][0]["metadata"] == {"description": "source"}
+    assert graph.ways["x"][0]["metadata"] == {"description": "source"}
 
 
 def test_graph_merge_returns_self_and_keeps_all_ways():
@@ -101,7 +106,7 @@ def test_graph_merge_returns_self_and_keeps_all_ways():
     merged = left.merge(right)
 
     assert merged is left
-    assert len(left.steps["x"]) == 2
+    assert len(left.ways["x"]) == 2
 
 
 def test_graph_fields_only_lists_outputs():
@@ -120,8 +125,8 @@ def test_pathfinder_prefers_lower_total_cost():
     path = Pathfinder(graph).find_path("y")
 
     assert path.cost == pytest.approx(3.0)
-    assert path.root.step_index == 1
-    assert path.root.needs == []
+    assert path.way_index == 1
+    assert path.needs == []
 
 
 def test_pathfinder_avoids_cycle_when_alternative_exists():
@@ -133,7 +138,7 @@ def test_pathfinder_avoids_cycle_when_alternative_exists():
     path = Pathfinder(graph).find_path("x")
 
     assert path.cost == pytest.approx(5.0)
-    assert path.root.is_source is True
+    assert path.is_source is True
     assert graph.compute("x") == 2
 
 
@@ -153,8 +158,8 @@ def test_compute_path_records_actual_costs():
     path = graph.path("y")
 
     assert graph.compute(path) == 3
-    assert path.root.last_actual_cost == pytest.approx(3.0)
-    assert path.root.needs[0].last_actual_cost == pytest.approx(1.0)
+    assert path.last_actual_cost == pytest.approx(3.0)
+    assert path.needs[0].last_actual_cost == pytest.approx(1.0)
 
 
 def test_path_str_reports_total_cost_and_tree():
@@ -170,17 +175,17 @@ def test_path_str_reports_total_cost_and_tree():
 
 
 def test_cache_str_reports_loader_costs_and_cached_fields():
-    cache = Cache(ScalarCacheLoader(), uncached_cost=9.0, cached_cost=0.5)
+    cache = Cache(Graph(), ScalarCacheLoader(), load_cost=9.0, cached_cost=0.5)
 
     assert str(cache) == "\n".join([
         "Cache",
         "  loader: ScalarCacheLoader",
-        "  uncached cost: 9.0",
+        "  load cost: 9.0",
         "  cached cost: 0.5",
         "  cached fields: -",
     ])
 
-    cache.get("x")
+    cache.load("x")
 
     assert str(cache).endswith("  cached fields: x")
 
@@ -255,11 +260,11 @@ def test_graph_compute_accepts_a_precomputed_path(caplog):
 
 
 def test_cache_logs_miss_hit_and_bulk_load(caplog):
-    cache = Cache(BulkCacheLoader(), uncached_cost=9.0, cached_cost=0.5)
+    cache = Cache(Graph(), BulkCacheLoader(), load_cost=9.0, cached_cost=0.5)
 
     with caplog.at_level(logging.DEBUG):
-        assert cache.get("x") == 1
-        assert cache.get("x") == 1
+        assert cache.load("x") == 1
+        assert cache.load("x") == 1
 
     assert "Cache miss for x" in caplog.text
     assert "Loaded 2 field(s) while fetching x" in caplog.text
@@ -270,7 +275,7 @@ def test_block_loader_logs_block_load(caplog):
     loader = BlockLoader({"x": 4, "y": 5}, load_cost=3.0, cached_cost=0.2)
 
     with caplog.at_level(logging.DEBUG):
-        assert loader.load("x") == 4
+        assert loader.load("x") == {"x": 4, "y": 5}
         assert loader.load("y") == 5
 
     assert "Loading block for x (2 field(s))" in caplog.text
@@ -285,8 +290,8 @@ def test_pathfinder_logs_failed_route_and_missing_path(caplog):
         with pytest.raises(NoPathError):
             Pathfinder(graph).find_path("y")
 
-    assert "Trying step 0 for y with needs=('x',) and local cost=1.0" in caplog.text
-    assert "Step 0 for y failed at need x" in caplog.text
+    assert "Trying way 0 for y with needs=('x',) and local cost=1.0" in caplog.text
+    assert "Way 0 for y failed at need x" in caplog.text
     assert "No path found to y" in caplog.text
 
 
@@ -304,26 +309,28 @@ def test_compute_path_logs_cost_change(caplog):
     assert "Cost change for x: 1.0 -> 2.0" in caplog.text
 
 
-def test_cache_caches_scalar_loads_and_updates_cost():
-    cache = Cache(ScalarCacheLoader(), uncached_cost=9.0, cached_cost=0.5)
+def test_cache_adds_cached_way_after_scalar_load():
+    graph = Graph()
+    cache = Cache(graph, ScalarCacheLoader(), load_cost=9.0, cached_cost=0.5)
 
-    assert cache.cost("x") == pytest.approx(9.0)
-    assert cache.get("x") == 7
-    assert cache.cost("x") == pytest.approx(0.5)
-    assert cache.get("x") == 7
+    assert len(graph.ways["x"]) == 1
+    assert graph.path("x").cost == pytest.approx(9.0)
+    assert cache.load("x") == 7
+    assert graph.path("x").cost == pytest.approx(0.5)
     assert cache.loader.calls == 1
 
 
-def test_cache_bulk_load_caches_all_returned_fields():
-    cache = Cache(BulkCacheLoader(), uncached_cost=9.0, cached_cost=0.5)
+def test_cache_bulk_load_adds_cached_ways_for_all_loaded_fields():
+    graph = Graph()
+    cache = Cache(graph, BulkCacheLoader(), load_cost=9.0, cached_cost=0.5)
 
-    assert cache.get("x") == 1
-    assert cache.cost("y") == pytest.approx(0.5)
-    assert cache.get("y") == 2
+    assert cache.load("x") == 1
+    assert graph.path("y").cost == pytest.approx(0.5)
+    assert cache.load("y") == 2
     assert cache.loader.calls == 1
 
 
-def test_base_loader_as_graph_uses_dynamic_cost_by_default():
+def test_base_loader_as_graph_uses_loader_cost_by_default():
     graph = DemoLoader().as_graph()
 
     path = Pathfinder(graph).find_path("x")
@@ -348,3 +355,4 @@ def test_block_loader_exports_work_as_a_graph():
 
     assert path.cost == pytest.approx(3.0)
     assert graph.compute("x") == 4
+    assert graph.path("y").cost == pytest.approx(0.2)

@@ -3,8 +3,8 @@ Loader abstractions for injecting external data into a Graph.
 
 Defines loader classes that expose externally stored field values as
 zero-need graph entries with associated access costs.
-Supports simple per-field loading and block-style bulk loading with caching.
 """
+
 import logging
 from typing import Any, Dict, Optional, Union
 
@@ -21,9 +21,14 @@ class BaseLoader:
     Maps external data sources to zero-need graph entries.
     Subclasses provide loading logic, available fields, and access cost.
     """
+
     def __init__(self):
         """Start with an empty in-memory mapping of available fields."""
         self._fields = {}
+
+    def fields(self):
+        """Return the field names this loader can provide."""
+        return tuple(self._fields)
 
     def load(self, field: str) -> Any:
         """
@@ -49,11 +54,11 @@ class BaseLoader:
 
     def as_graph(self, cost: Optional[Union[float, Any]] = None):
         """
-        Expose each field as a zero-need step in a new Graph.
+        Expose each field as a zero-need way in a new Graph.
 
-        If `cost` is omitted, each graph step asks the loader for its current
-        field cost when evaluated. Passing a fixed `cost` overrides that
-        dynamic behavior for all exported fields.
+        If `cost` is omitted, each graph way uses the loader's declared access
+        cost at graph construction time. Passing a fixed `cost` overrides that
+        value for all exported fields.
         """
         graph = Graph()
         logger.debug(
@@ -61,13 +66,13 @@ class BaseLoader:
             len(self._fields),
             type(self).__name__,
         )
-        for name in self._fields:
-            way_cost = (lambda name=name: self.cost(name)) if cost is None else cost
+        for name in self.fields():
+            way_cost = self.cost(name) if cost is None else cost
             graph.add(
                 name,
                 lambda name=name: self.load(name),
                 cost=way_cost,
-                metadata={"description": "Loader"},
+                metadata={"description": type(self).__name__},
             )
         return graph
 
@@ -85,31 +90,30 @@ class BaseLoader:
 
 class BlockLoader(BaseLoader):
     """
-    Loader that simulates bulk I/O by caching an entire block on first access.
+    Loader that reads a whole block at once and can be wrapped by a Cache.
 
-    Simulates bulk I/O by loading all fields on first access, then serving
-    subsequent accesses from memory at reduced cost. Exposes each field
-    as a zero-need graph entry.
+    The first load returns the full block so a wrapping Cache can add cheap
+    cached ways for every field in the block.
     """
+
     def __init__(self, file_handle: Dict[str, Any], load_cost=1.0, cached_cost=0.05):
         """
-        Store the backing mapping and the costs before and after the first load.
+        Store the backing mapping and the costs before and after caching.
 
         `file_handle` is any mapping from field names to values.
         """
         super().__init__()
         self._fields = file_handle
-        self._cache = {}
         self._loaded = False
         self.load_cost = load_cost
         self.cached_cost = cached_cost
 
     def load(self, field: str) -> Any:
         """
-        Load the whole block on first access, then serve later requests from cache.
+        Load the whole block on first access.
 
-        The first field request copies the whole backing mapping into the in-
-        memory cache.
+        The first field request returns the full block so a Cache can register
+        cached ways for every field that became available together.
         """
         if not self._loaded:
             logger.info(
@@ -117,19 +121,29 @@ class BlockLoader(BaseLoader):
                 field,
                 len(self._fields),
             )
-            self._cache = dict(self._fields)
             self._loaded = True
-        else:
-            logger.debug("Serving %s from loaded block", field)
-        return self._cache[field]
+            return dict(self._fields)
+        logger.debug("Serving %s from loaded block", field)
+        return self._fields[field]
 
     def cost(self, field: str) -> float:
-        """
-        Return the pre-load or post-load access cost for `field`.
+        """Return the declared pre-cache access cost for `field`."""
+        if field not in self._fields:
+            raise ValueError(f"Field '{field}' not found.")
+        return self.load_cost
 
-        This models expensive first access followed by cheap cached access.
-        """
-        return self.cached_cost if self._loaded else self.load_cost
+    def as_graph(self, cost: Optional[Union[float, Any]] = None):
+        """Expose this block loader through an explicit cache-backed graph."""
+        from .cache import Cache
+
+        graph = Graph()
+        Cache(
+            graph,
+            self,
+            load_cost=self.load_cost if cost is None else cost,
+            cached_cost=self.cached_cost,
+        )
+        return graph
 
     def __str__(self):
         """Summarize the block loader state, fields, and cost model."""

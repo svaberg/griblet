@@ -1,11 +1,9 @@
-"""
-Find and follow paths through a Graph.
-"""
+"""Find and follow paths through a Graph."""
 
 import logging
-from typing import Optional, Set, Tuple
+from typing import Optional, Set
 
-from .path import Path, Step
+from .path import Path
 
 
 logger = logging.getLogger(__name__)
@@ -20,55 +18,56 @@ class NoPathError(Exception):
     """
 
 
-def _step_cost(step):
+def _way_cost(way):
     """
-    Resolve a step cost stored as either a number or a zero-argument callable.
+    Resolve a way cost stored as either a number or a zero-argument callable.
 
     This keeps dynamic cost functions and fixed costs on the same footing.
     """
-    cost = step["cost"]
+    cost = way["cost"]
     return cost() if callable(cost) else cost
 
 
 def follow_path(path: Path, graph):
     """
-    Evaluate a resolved path and record the actual cost paid at each step.
+    Evaluate a resolved path and record the actual cost paid at each node.
 
     The returned value is the computed result at the root of the path. As the
-    path is followed, each step's `last_actual_cost` is updated with the cost
+    path is followed, each node's `last_actual_cost` is updated with the cost
     actually paid during that evaluation.
     """
-    def set_actual_cost(node: Step, actual_cost: float):
+
+    def set_actual_cost(node: Path, actual_cost: float):
         prev = node.last_actual_cost
         node.last_actual_cost = actual_cost
         if prev is not None and prev != actual_cost:
             logger.info("Cost change for %s: %s -> %s", node.name, prev, actual_cost)
 
-    def follow_step(node: Step):
-        if node.step_index is None:
-            raise RuntimeError(f"No chosen step for {node.name}")
+    def follow(node: Path):
+        if node.way_index is None:
+            raise RuntimeError(f"No chosen way for {node.name}")
 
-        step = graph.steps[node.name][node.step_index]
-        cost_val = _step_cost(step)
+        way = graph.ways[node.name][node.way_index]
+        local_cost = _way_cost(way)
         logger.debug(
-            "Following %s via step %s with local cost %s",
+            "Following %s via way %s with local cost %s",
             node.name,
-            node.step_index,
-            cost_val,
+            node.way_index,
+            local_cost,
         )
 
         if node.is_source:
-            set_actual_cost(node, cost_val)
+            set_actual_cost(node, local_cost)
             logger.debug("Loaded source %s", node.name)
-            return step["func"]()
+            return way["func"]()
 
-        values = [follow_step(need) for need in node.needs]
-        total_cost = cost_val + sum(need.last_actual_cost for need in node.needs)
+        values = [follow(need) for need in node.needs]
+        total_cost = local_cost + sum(need.last_actual_cost for need in node.needs)
         set_actual_cost(node, total_cost)
         logger.debug("Computed %s with actual cost %s", node.name, total_cost)
-        return step["func"](*values)
+        return way["func"](*values)
 
-    return follow_step(path.root)
+    return follow(path)
 
 
 class Pathfinder:
@@ -93,83 +92,75 @@ class Pathfinder:
             f"  memoized targets: {len(self.memo)}",
         ])
 
-    def _find_path(
-        self,
-        target: str,
-        trail: Optional[Set[str]] = None,
-    ) -> Tuple[float, Optional[Step]]:
+    def _find_path(self, target: str, trail: Optional[Set[str]] = None) -> Optional[Path]:
         """
-        Return the cheapest step tree for `target`, or fail if no path works.
+        Return the cheapest path to `target`, or `None` if no path works.
 
-        This is the recursive worker behind `find_path`, and it returns the
-        total cost together with the chosen root step.
+        This is the recursive worker behind `find_path`.
         """
         logger.debug("Searching for a path to %s", target)
         trail = set() if trail is None else trail
         if target in trail:
             logger.debug("Cycle encountered while searching for %s", target)
-            return float("inf"), None
+            return None
 
         if target in self.memo:
             logger.debug("Using memoized path to %s", target)
             return self.memo[target]
 
-        if target not in self.graph.steps:
+        if target not in self.graph.ways:
             raise KeyError(target)
 
-        best_cost = float("inf")
-        best_step = None
+        best_path = None
         trail.add(target)
 
-        for i, step in enumerate(self.graph.steps[target]):
-            needs = step["needs"]
-            subpaths = []
-            cost_val = _step_cost(step)
-            total = cost_val
+        for i, way in enumerate(self.graph.ways[target]):
+            needs = way["needs"]
+            child_paths = []
+            local_cost = _way_cost(way)
+            total_cost = local_cost
             logger.debug(
-                "Trying step %d for %s with needs=%s and local cost=%s",
+                "Trying way %d for %s with needs=%s and local cost=%s",
                 i,
                 target,
                 needs,
-                cost_val,
+                local_cost,
             )
             for need in needs:
                 try:
-                    need_cost, need_path = self._find_path(need, trail)
+                    need_path = self._find_path(need, trail)
                 except (NoPathError, KeyError):
                     need_path = None
                 if need_path is None:
-                    logger.debug("Step %d for %s failed at need %s", i, target, need)
+                    logger.debug("Way %d for %s failed at need %s", i, target, need)
                     break
-                total += need_cost
-                subpaths.append(need_path)
+                total_cost += need_path.cost
+                child_paths.append(need_path)
             else:
-                if total < best_cost:
-                    best_cost = total
-                    best_step = Step(
+                if best_path is None or total_cost < best_path.cost:
+                    best_path = Path(
                         name=target,
-                        cost=cost_val,
-                        step_index=i,
+                        cost=total_cost,
+                        way_index=i,
                         is_source=not needs,
-                        needs=subpaths,
-                        metadata=step.get("metadata", {}),
+                        needs=child_paths,
+                        metadata=way.get("metadata", {}),
                     )
                     logger.debug(
-                        "Step %d is the new best path to %s with total cost %s",
+                        "Way %d is the new best path to %s with total cost %s",
                         i,
                         target,
-                        total,
+                        total_cost,
                     )
 
         trail.remove(target)
+        self.memo[target] = best_path
 
-        if best_step is None:
-            self.memo[target] = (float("inf"), None)
+        if best_path is None:
             logger.warning("No path found to %s", target)
             raise NoPathError(f"No path to {target}.")
 
-        self.memo[target] = (best_cost, best_step)
-        return best_cost, best_step
+        return best_path
 
     def find_path(self, target: str) -> Path:
         """
@@ -178,10 +169,10 @@ class Pathfinder:
         Raises
         ------
         KeyError
-            If the graph has no steps at all for `target`.
+            If the graph has no ways at all for `target`.
         NoPathError
-            If the graph knows `target`, but every step reaching it fails.
+            If the graph knows `target`, but every way to reach it fails.
         """
-        path = Path(*self._find_path(target))
+        path = self._find_path(target)
         logger.info("Found path to %s with total cost %s", target, path.cost)
         return path

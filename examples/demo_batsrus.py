@@ -1,6 +1,7 @@
 import numpy as np
 
 from griblet import Graph
+from griblet.cache import Cache
 from griblet.loader import BaseLoader
 
 _fallback_gamma = 5/3
@@ -139,7 +140,9 @@ def make_wind_graph():
 
 
 def build_wind_graph():
-    return Graph(WindLoader().as_graph()).merge(make_wind_graph())
+    graph = make_wind_graph()
+    Cache(graph, WindLoader(), cached_cost=0.05)
+    return graph
 
 
 if __name__ == "__main__":
@@ -150,7 +153,7 @@ if __name__ == "__main__":
 
     print("\n=== BATSRUS Demo ===\n")
     print(f"Best total cost: {path.cost:.2f}")
-    print(f"Resolved path root: {path.root.name}")
+    print(f"Resolved path root: {path.name}")
     print(f"Output shape: {value.shape}")
     print("First three values:")
     print(value[:3])
