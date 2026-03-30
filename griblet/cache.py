@@ -62,6 +62,7 @@ class Cache:
             field,
             lambda field=field: self._cache[field],
             cost=self.cached_cost,
+            metadata={"kind": "cache"},
         )
         self._cached_steps[field] = self.graph.paths[field][-1]
         logger.info("Added cached path for %s", field)

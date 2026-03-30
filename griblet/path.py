@@ -36,9 +36,9 @@ class Path:
         This is the internal formatter used by `__str__`.
         """
         leaf = " [source]" if not self.needs else ""
-        desc = self.metadata.get("description", "")
+        kind = self.metadata.get("kind", "")
         unit = self.metadata.get("unit", "")
-        line = " " * indent + f"{self.name} (cost: {self.cost}){leaf} {desc} {unit}".rstrip()
+        line = " " * indent + f"{self.name} (cost: {self.cost}){leaf} {kind} {unit}".rstrip()
         lines = [line]
         for need in self.needs:
             lines.extend(need._format_lines(indent + 4))
