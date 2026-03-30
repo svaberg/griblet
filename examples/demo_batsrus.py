@@ -202,9 +202,9 @@ if __name__ == "__main__":
     print("\n=== Computed Values ===\n")
     print("T ideal (K) shape:", temperature.shape)
     print("T ideal (K) first three values:")
-    print(temperature[:3])
+    print(np.array2string(temperature[:3], precision=4, floatmode="maxprec_equal"))
     print("\nMa (U/c_s) first three values:")
-    print(mach[:3])
+    print(np.array2string(mach[:3], precision=4, floatmode="maxprec_equal"))
 
     path_before = warm_path
     # Demo trick: the cheaper two-input c_s path was added first in
@@ -219,4 +219,4 @@ if __name__ == "__main__":
     print(f"cost after: {_format_cost(rerouted_path.cost)}\n")
     print(rerouted_path)
     print("\nrerouted Ma (U/c_s) first three values:")
-    print(rerouted_mach[:3])
+    print(np.array2string(rerouted_mach[:3], precision=4, floatmode="maxprec_equal"))
