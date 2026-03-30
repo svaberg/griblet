@@ -1,5 +1,8 @@
 """Small box-geometry example used by the demo scripts and tests."""
 
+import json
+from pathlib import Path
+
 import numpy as np
 import pint
 
@@ -11,15 +14,14 @@ ureg = pint.UnitRegistry()
 
 
 class BoxLoader(Loader):
-    """Provide primitive box fields as direct source data."""
+    """Load primitive box fields from the example JSON data file."""
 
     def __init__(self):
         super().__init__()
+        raw_fields = json.loads(Path(__file__).with_name("box_data.json").read_text())
         self._fields = {
-            'length': np.array([5.0]) * ureg.meter,
-            'width': np.array([4.0]) * ureg.meter,
-            'height': np.array([3.0]) * ureg.meter,
-            'area': np.array([20.0]) * ureg.meter**2,
+            name: np.array(spec["value"]) * ureg(spec["unit"])
+            for name, spec in raw_fields.items()
         }
 
 
