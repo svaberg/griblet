@@ -20,7 +20,7 @@ def test_demo_best_path_flow():
     value = graph.compute("volume")
     value_second = graph.compute("volume")
 
-    assert path.cost == pytest.approx(22.0)
+    assert path.cost == pytest.approx(32.0)
     assert value.to(ureg.meter**3).magnitude == pytest.approx(60.0)
     assert value_second.to(ureg.meter**3).magnitude == pytest.approx(60.0)
 
@@ -33,7 +33,7 @@ def test_demo_rerouting_flow():
     path_1 = graph.path("volume")
     value_1 = graph.compute("volume")
 
-    graph.paths.pop("area", None)
+    graph.paths["volume"].pop()
     path_2 = graph.path("volume")
     value_2 = graph.compute("volume")
 

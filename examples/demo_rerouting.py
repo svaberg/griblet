@@ -1,4 +1,4 @@
-"""Show how path choice changes when box-graph fields are removed."""
+"""Show how path choice changes when one box-volume path is removed."""
 
 import logging
 
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     val1 = graph.compute("volume")
     print(f"{'volume'}: {val1} (cost: {path1.cost:.2f})")
 
-    graph.paths.pop("area", None)
+    graph.paths["volume"].pop()
     path2 = graph.path("volume")
     val2 = graph.compute("volume")
     print(f"{'volume'}: {val2} (cost: {path2.cost:.2f})")

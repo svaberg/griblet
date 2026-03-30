@@ -1,6 +1,5 @@
 {
   "length": {"value": 5.0, "unit": "meter"},
   "width": {"value": 4.0, "unit": "meter"},
-  "height": {"value": 3.0, "unit": "meter"},
-  "area": {"value": 20.0, "unit": "meter**2"}
+  "height": {"value": 3.0, "unit": "meter"}
 }

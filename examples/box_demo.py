@@ -23,7 +23,8 @@ class BoxLoader(Loader):
     call rereads the file, extracts one field, and discards the rest. That
     keeps this example focused on what an ordinary file-backed loader looks
     like, in contrast to a block loader that keeps many fields resident after
-    one read.
+    one read. The JSON only contains primitive fields; derived values such as
+    `area` come from `box_graph()`.
     """
 
     def __init__(self):
@@ -102,11 +103,11 @@ if __name__ == "__main__":
     print("base_perimeter:", base_perimeter)
     print("linear_size:", linear_size)
 
-    graph.paths.pop("area", None)
+    graph.paths["volume"].pop()
     rerouted_path = graph.path("volume")
     rerouted_volume = graph.compute("volume")
 
-    print("\n=== After Removing area ===\n")
+    print("\n=== After Removing Direct volume Path ===\n")
     print(f"cost before: {path.cost}")
     print(f"cost after: {rerouted_path.cost}\n")
     print(rerouted_path)
