@@ -6,3 +6,10 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+
+# Coverage output
+.coverage
+pytest-cobertura.xml
+
+# PNG output
+*.png
