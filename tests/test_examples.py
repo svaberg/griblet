@@ -6,7 +6,7 @@ from griblet import NoPathError
 from griblet import Graph
 
 from demo_batsrus import build_wind_graph
-from box_demo import BoxLoader, box_graph, ureg
+from demo_box import BoxLoader, box_graph, ureg
 import plots
 
 

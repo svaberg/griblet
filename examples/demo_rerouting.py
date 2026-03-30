@@ -6,7 +6,7 @@ logging.basicConfig(level=logging.INFO)
 
 from griblet import Graph, NoPathError
 
-from box_demo import BoxLoader, box_graph
+from demo_box import BoxLoader, box_graph
 
 
 if __name__ == "__main__":

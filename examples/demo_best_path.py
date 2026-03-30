@@ -2,7 +2,7 @@
 
 from griblet import Graph
 
-from box_demo import BoxLoader, box_graph, ureg
+from demo_box import BoxLoader, box_graph, ureg
 
 if __name__ == "__main__":
     graph = Graph()

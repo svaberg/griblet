@@ -9,7 +9,7 @@ logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 from griblet import Graph, NoPathError
 
-from box_demo import BoxLoader, box_graph
+from demo_box import BoxLoader, box_graph
 from demo_batsrus import WindLoader, make_wind_graph
 import plots
 
