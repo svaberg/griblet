@@ -8,6 +8,7 @@ zero-need graph entries with associated access costs.
 import logging
 from typing import Any, Dict, Optional, Union
 
+from .cache import Cache
 from .graph import Graph
 
 
@@ -133,8 +134,6 @@ class BlockLoader(BaseLoader):
 
     def as_graph(self, cost: Optional[Union[float, Any]] = None):
         """Expose this block loader through an explicit cache-backed graph."""
-        from .cache import Cache
-
         graph = Graph()
         Cache(
             graph,
