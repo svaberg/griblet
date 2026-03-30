@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import logging
 
 from .path import Path
-from .pathfinder import Pathfinder, follow_path
+from .pathfinder import Pathfinder
 
 
 logger = logging.getLogger(__name__)
@@ -121,8 +121,15 @@ class Graph:
         else:
             raise TypeError("compute() takes a field name or a Path")
 
+        logger.debug("Following %s", path.name)
+        if not path.needs:
+            logger.debug("Loaded source %s", path.name)
+            return path.func()
+
         logger.info("Computing %s", path.name)
-        value = follow_path(path)
+        values = [self.compute(need) for need in path.needs]
+        value = path.func(*values)
+        logger.debug("Computed %s", path.name)
         logger.info("Computed %s with total cost %s", path.name, path.cost)
         return value
 

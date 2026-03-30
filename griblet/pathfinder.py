@@ -18,26 +18,6 @@ class NoPathError(Exception):
     """
 
 
-def follow_path(path: Path):
-    """
-    Evaluate a resolved path.
-
-    The returned value is the computed result at the root of the path.
-    """
-
-    def follow(node: Path):
-        logger.debug("Following %s", node.name)
-        if not node.needs:
-            logger.debug("Loaded source %s", node.name)
-            return node.func()
-
-        values = [follow(need) for need in node.needs]
-        logger.debug("Computed %s", node.name)
-        return node.func(*values)
-
-    return follow(path)
-
-
 class Pathfinder:
     """
     Search a graph for the lowest-cost path to a requested target.
