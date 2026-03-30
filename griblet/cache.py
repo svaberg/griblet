@@ -56,7 +56,7 @@ class Cache:
                 )
 
     def _add_cached_step(self, field):
-        """Add one cheap direct cached step for `field` if it is not present yet."""
+        """Add one cheap direct cached path for `field` if it is not present yet."""
         if field in self._cached_steps:
             return
         self.graph.add(
@@ -66,14 +66,14 @@ class Cache:
             metadata={"description": "Cache"},
         )
         self._cached_steps[field] = self.graph.paths[field][-1]
-        logger.info("Added cached step for %s", field)
+        logger.info("Added cached path for %s", field)
 
     def load(self, field):
         """
         Return `field`, loading it if needed and caching the result explicitly.
 
         If the wrapped loader returns a dict, all returned fields are cached at
-        once and each gains a direct cached step in the graph.
+        once and each gains a direct cached path in the graph.
         """
         if field in self._cache:
             logger.debug("Cache hit for %s", field)
@@ -99,7 +99,7 @@ class Cache:
         return loaded
 
     def discard(self, field):
-        """Remove one cached field and its cached step if present."""
+        """Remove one cached field and its cached path if present."""
         self._cache.pop(field, None)
         step = self._cached_steps.pop(field, None)
         if step is None:
@@ -107,7 +107,7 @@ class Cache:
         self.graph.paths[field].remove(step)
         if not self.graph.paths[field]:
             self.graph.paths.pop(field)
-        logger.info("Removed cached step for %s", field)
+        logger.info("Removed cached path for %s", field)
 
     def __str__(self):
         """Summarize the wrapped loader and the currently cached fields."""

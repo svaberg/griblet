@@ -66,7 +66,7 @@ class Pathfinder:
             child_paths = []
             total_cost = step.cost
             logger.debug(
-                "Trying step %d for %s with needs=%s and cost=%s",
+                "Trying path %d for %s with needs=%s and cost=%s",
                 i,
                 target,
                 step.needs,
@@ -78,7 +78,7 @@ class Pathfinder:
                 except (NoPathError, KeyError):
                     need_path = None
                 if need_path is None:
-                    logger.debug("Step %d for %s failed at need %s", i, target, need)
+                    logger.debug("Path %d for %s failed at need %s", i, target, need)
                     break
                 total_cost += need_path.cost
                 child_paths.append(need_path)
@@ -92,7 +92,7 @@ class Pathfinder:
                         metadata=dict(step.metadata),
                     )
                     logger.debug(
-                        "Step %d is the new best path to %s with total cost %s",
+                        "Path %d is the new best path to %s with total cost %s",
                         i,
                         target,
                         total_cost,

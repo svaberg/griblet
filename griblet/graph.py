@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Step:
-    """One local graph step for reaching a field."""
+    """One local graph path alternative for reaching a field."""
 
     needs: tuple
     func: object
@@ -24,7 +24,7 @@ class Graph:
     """
     Registry of all known paths that derive named data.
 
-    Each output name can have more than one local graph step to reach it.
+    Each output name can have more than one local graph path to reach it.
     """
 
     def __init__(self, other_graph=None):
@@ -35,7 +35,7 @@ class Graph:
 
     def add(self, name, func, *, needs=None, cost=1.0, metadata=None):
         """
-        Register one graph step that produces `name`.
+        Register one graph path that produces `name`.
 
         Parameters
         ----------
@@ -56,7 +56,7 @@ class Graph:
             Step(needs=needs, func=func, cost=cost, metadata=metadata)
         )
         logger.debug(
-            "Added step %d for %s with needs=%s and cost=%s",
+            "Added path %d for %s with needs=%s and cost=%s",
             len(self.paths[name]),
             name,
             needs,
@@ -73,7 +73,7 @@ class Graph:
         for name, paths in other.paths.items():
             self.paths.setdefault(name, []).extend(paths)
         logger.debug(
-            "Merged %d step(s) across %d field(s)",
+            "Merged %d path(s) across %d field(s)",
             sum(map(len, other.paths.values())),
             len(other.paths),
         )
@@ -154,7 +154,7 @@ class Graph:
             for i, step in enumerate(self.paths[name], 1):
                 meta_str = ", ".join(f"{k}={v}" for k, v in step.metadata.items())
                 lines.append(
-                    f"  Step {i}: needs={step.needs}, cost={step.cost}"
+                    f"  Path {i}: needs={step.needs}, cost={step.cost}"
                     + (f", meta={{{meta_str}}}" if meta_str else "")
                 )
         return "\n".join(lines)
