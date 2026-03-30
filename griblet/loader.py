@@ -47,11 +47,18 @@ class Loader:
         """
         Return the access cost for `field` in this loader.
 
-        The default implementation uses a small fixed cost for all known fields.
+        The default implementation uses a fixed disk-like cost for all known
+        fields.
         """
         if field not in self._fields:
             raise ValueError(f"Field '{field}' not found.")
-        return 0.1
+        return 10.0
+
+    def _metadata(self, field: str) -> dict:
+        """Return graph metadata for one exported field."""
+        if field not in self._fields:
+            raise ValueError(f"Field '{field}' not found.")
+        return {}
 
     def as_graph(self, cost: Optional[Union[float, Any]] = None):
         """
@@ -72,6 +79,7 @@ class Loader:
                 name,
                 lambda name=name: self.load(name),
                 cost=self.cost(name) if cost is None else cost,
+                metadata=self._metadata(name),
             )
         return graph
 

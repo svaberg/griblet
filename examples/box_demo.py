@@ -10,7 +10,6 @@ from griblet.loader import Loader
 
 ureg = pint.UnitRegistry()
 BOX_DATA_PATH = Path(__file__).with_name("box_data.json")
-BOX_LOAD_COST = 10.0
 BOX_FORMULA_COST = 2.0
 
 
@@ -44,23 +43,11 @@ class BoxLoader(Loader):
         spec = json.loads(BOX_DATA_PATH.read_text())[field]
         return spec["value"] * self._units[field]
 
-    def cost(self, field):
-        """Use a high fixed cost so derived paths are preferred after loading."""
+    def _metadata(self, field):
+        """Expose the source-field kind and unit declared in JSON."""
         if field not in self._fields:
             raise ValueError(f"Field '{field}' not found.")
-        return BOX_LOAD_COST
-
-    def as_graph(self, cost=None):
-        """Expose the source fields together with the units declared in JSON."""
-        graph = Graph()
-        for name in self.fields():
-            graph.add(
-                name,
-                lambda name=name: self.load(name),
-                cost=self.cost(name) if cost is None else cost,
-                metadata={"kind": "disk", "unit": self._units[name]},
-            )
-        return graph
+        return {"kind": "disk", "unit": self._units[field]}
 
 
 def box_graph():
