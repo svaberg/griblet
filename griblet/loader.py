@@ -23,6 +23,8 @@ class Loader:
     Subclasses provide loading logic, available fields, and access cost.
     """
 
+    DEFAULT_COST = 10.0
+
     def __init__(self):
         """Start with an empty in-memory mapping of available fields."""
         self._fields = {}
@@ -47,12 +49,11 @@ class Loader:
         """
         Return the access cost for `field` in this loader.
 
-        The default implementation uses a fixed disk-like cost for all known
-        fields.
+        The default implementation uses the class default for all known fields.
         """
         if field not in self._fields:
             raise ValueError(f"Field '{field}' not found.")
-        return 10.0
+        return type(self).DEFAULT_COST
 
     def _metadata(self, field: str) -> dict:
         """Return graph metadata for one exported field."""
@@ -99,7 +100,10 @@ class BlockLoader(Loader):
     cached steps for every field in the block.
     """
 
-    def __init__(self, file_handle: Dict[str, Any], load_cost=1.0, cached_cost=0.1):
+    DEFAULT_COST = 1.0
+    DEFAULT_CACHED_COST = 0.1
+
+    def __init__(self, file_handle: Dict[str, Any], load_cost=None, cached_cost=None):
         """
         Store the backing mapping and the costs before and after residency.
 
@@ -108,8 +112,10 @@ class BlockLoader(Loader):
         super().__init__()
         self._fields = file_handle
         self._loaded = False
-        self.load_cost = load_cost
-        self.cached_cost = cached_cost
+        self.load_cost = type(self).DEFAULT_COST if load_cost is None else load_cost
+        self.cached_cost = (
+            type(self).DEFAULT_CACHED_COST if cached_cost is None else cached_cost
+        )
         self._cache = None
 
     def load(self, field: str) -> Any:
