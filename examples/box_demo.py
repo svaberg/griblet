@@ -6,7 +6,6 @@ from pathlib import Path
 import pint
 
 from griblet import Graph
-from griblet.cache import Cache
 from griblet.loader import Loader
 
 ureg = pint.UnitRegistry()
@@ -52,7 +51,5 @@ def make_box_graph():
 
 
 def build_box_graph():
-    """Build the full box example graph with cached loader-backed sources."""
-    graph = make_box_graph()
-    Cache(graph, BoxLoader(), cached_cost=0.05)
-    return graph
+    """Build the full box example graph with plain loader-backed sources."""
+    return Graph(BoxLoader().as_graph()).merge(make_box_graph())
