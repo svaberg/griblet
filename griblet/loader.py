@@ -174,6 +174,7 @@ class BlockLoader(Loader):
                     field,
                     lambda field=field: self._serve(field),
                     cost=self.load_cost,
+                    metadata=self._metadata(field),
                 )
             self._cache = Cache(
                 graph,

@@ -3,8 +3,7 @@
 import numpy as np
 
 from griblet import Graph
-from griblet.cache import Cache
-from griblet.loader import Loader
+from griblet.loader import BlockLoader
 
 _fallback_gamma = 5/3
 _mu_0 = 4e-7 * np.pi
@@ -12,13 +11,20 @@ _proton_mass = 1.67262192369e-27
 _boltzmann = 1.380649e-23
 
 
-class WindLoader(Loader):
+class WindLoader(BlockLoader):
     """
-    Test loader, like the box demo: primitives only, plain numpy.
-    Values here are placeholders just to make the graph runnable.
+    Placeholder BATSRUS block loader with in-memory NumPy field data.
+
+    This stands in for a real BATSRUS file reader. The values are synthetic,
+    but the block-loading behavior is real: the first field request loads the
+    whole block, after which cached paths become available for every source
+    field in the block.
     """
+
+    DEFAULT_COST = 10.0
+    DEFAULT_CACHED_COST = 0.05
+
     def __init__(self, n=10):
-        super().__init__()
         rng = np.random.default_rng(0)
 
         X_R = rng.normal(size=n)
@@ -36,7 +42,7 @@ class WindLoader(Loader):
         P   = np.abs(rng.normal(size=n)) + 1.0
         rho = np.abs(rng.normal(size=n)) + 1.0
 
-        self._fields = {
+        super().__init__({
             "X (R)": X_R,
             "Y (R)": Y_R,
             "Z (R)": Z_R,
@@ -50,7 +56,13 @@ class WindLoader(Loader):
             "Rho (kg/m^3)": rho,
             "Star_radius_m": 1.0,   # scalar
             "GAMMA": 1.4,           # scalar
-        }
+        })
+
+    def _metadata(self, field):
+        """Mark BATSRUS source fields as disk-backed."""
+        if field not in self._fields:
+            raise ValueError(f"Field '{field}' not found.")
+        return {"kind": "disk"}
 
 
 def make_wind_graph():
@@ -143,21 +155,62 @@ def make_wind_graph():
 
 
 def build_wind_graph():
-    """Build the full BATSRUS-style example with cached source data."""
-    graph = make_wind_graph()
-    Cache(graph, WindLoader(), cached_cost=0.05)
+    """
+    Build the full BATSRUS-style example on the loader's live graph.
+
+    A BlockLoader owns a cache-backed graph that changes as fields are loaded,
+    so the derived paths are merged onto that live graph rather than onto a
+    separate copy.
+    """
+    graph = WindLoader().as_graph()
+    graph.merge(make_wind_graph())
     return graph
 
 
 if __name__ == "__main__":
-    graph = build_wind_graph()
+    loader = WindLoader()
+    print("\n=== Loader ===\n")
+    print(loader)
 
-    path = graph.path("T ideal (K)")
-    value = graph.compute("T ideal (K)")
+    loader_graph = loader.as_graph()
+    print("\n=== Loader Graph ===\n")
+    print(loader_graph)
 
-    print("\n=== BATSRUS Demo ===\n")
-    print(f"Best total cost: {path.cost:.2f}")
-    print(f"Resolved path root: {path.name}")
-    print(f"Output shape: {value.shape}")
-    print("First three values:")
-    print(value[:3])
+    derived_graph = make_wind_graph()
+    print("\n=== Derived Graph ===\n")
+    print(derived_graph)
+
+    graph = loader_graph
+    graph.merge(derived_graph)
+
+    cold_path = graph.path("Ma (U/c_s)")
+    print("\n=== Cold Best Path to Ma (U/c_s) ===\n")
+    print(cold_path)
+
+    temperature = graph.compute("T ideal (K)")
+    mach = graph.compute("Ma (U/c_s)")
+    warm_path = graph.path("Ma (U/c_s)")
+
+    print("\n=== After One Block Load ===\n")
+    print(f"cost before: {cold_path.cost}")
+    print(f"cost after: {warm_path.cost}\n")
+    print(warm_path)
+
+    print("\n=== Computed Values ===\n")
+    print("T ideal (K) shape:", temperature.shape)
+    print("T ideal (K) first three values:")
+    print(temperature[:3])
+    print("\nMa (U/c_s) first three values:")
+    print(mach[:3])
+
+    path_before = warm_path
+    graph.paths.pop("GAMMA", None)
+    rerouted_path = graph.path("Ma (U/c_s)")
+    rerouted_mach = graph.compute("Ma (U/c_s)")
+
+    print("\n=== After Removing GAMMA from the Warm Graph ===\n")
+    print(f"cost before: {path_before.cost}")
+    print(f"cost after: {rerouted_path.cost}\n")
+    print(rerouted_path)
+    print("\nrerouted Ma (U/c_s) first three values:")
+    print(rerouted_mach[:3])
