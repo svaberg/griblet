@@ -12,11 +12,11 @@ from demo_batsrus import WindLoader, make_wind_graph
 import plots
 
 
-def plot_networkx_graph(loader, ways_graph, filename, *, target="volume", reroute_key="area"):
+def plot_networkx_graph(loader, paths_graph, filename, *, target="volume", reroute_key="area"):
     loader_graph = loader.as_graph()
     graph = Graph(loader_graph)
 
-    graph.merge(ways_graph)
+    graph.merge(paths_graph)
     print(graph)
     field_count = len(graph.fields())
     fig_height = max(7.0, 1.8 * math.sqrt(field_count))
@@ -31,7 +31,7 @@ def plot_networkx_graph(loader, ways_graph, filename, *, target="volume", rerout
         path1 = graph.path(target)
 
         rerouted_graph = Graph(loader.as_graph())
-        rerouted_graph.merge(ways_graph)
+        rerouted_graph.merge(paths_graph)
         rerouted_graph.paths.pop(reroute_key, None)
         path2 = rerouted_graph.path(target)
 

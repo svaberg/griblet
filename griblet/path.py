@@ -1,7 +1,7 @@
 """Recursive path representation for resolved graphs."""
 
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List
 
 
 @dataclass
@@ -29,7 +29,6 @@ class Path:
     is_source: bool = False
     needs: List["Path"] = field(default_factory=list)
     metadata: Dict = field(default_factory=dict)
-    _record: Optional[Dict] = field(default=None, repr=False)
 
     def _format_lines(self, indent=0):
         """

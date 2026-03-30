@@ -69,6 +69,7 @@ def test_graph_path_returns_path():
     assert isinstance(path, Path)
     assert path.cost == pytest.approx(3.0)
     assert path.name == "y"
+    assert not hasattr(path, "_record")
 
 
 def test_pathfinder_raises_keyerror_for_missing_targets():
@@ -93,10 +94,10 @@ def test_graph_add_copies_metadata():
     graph.add("x", lambda: 1, metadata=metadata)
     metadata["description"] = "mutated"
 
-    assert graph.paths["x"][0]["metadata"] == {"description": "source"}
+    assert graph.paths["x"][0].metadata == {"description": "source"}
 
 
-def test_graph_merge_returns_self_and_keeps_all_ways():
+def test_graph_merge_returns_self_and_keeps_all_paths():
     left = Graph()
     right = Graph()
     left.add("x", lambda: 1, cost=1.0)
@@ -276,12 +277,12 @@ def test_pathfinder_logs_failed_route_and_missing_path(caplog):
         with pytest.raises(NoPathError):
             Pathfinder(graph).find_path("y")
 
-    assert "Trying path 0 for y with needs=('x',) and local cost=1.0" in caplog.text
-    assert "Path 0 for y failed at need x" in caplog.text
+    assert "Trying path 1 for y with needs=('x',) and cost=1.0" in caplog.text
+    assert "Path 1 for y failed at need x" in caplog.text
     assert "No path found to y" in caplog.text
 
 
-def test_cache_adds_cached_way_after_scalar_load():
+def test_cache_adds_cached_path_after_scalar_load():
     graph = Graph()
     cache = Cache(graph, ScalarCacheLoader(), load_cost=9.0, cached_cost=0.5)
 
@@ -292,7 +293,7 @@ def test_cache_adds_cached_way_after_scalar_load():
     assert cache.loader.calls == 1
 
 
-def test_cache_bulk_load_adds_cached_ways_for_all_loaded_fields():
+def test_cache_bulk_load_adds_cached_paths_for_all_loaded_fields():
     graph = Graph()
     cache = Cache(graph, BulkCacheLoader(), load_cost=9.0, cached_cost=0.5)
 

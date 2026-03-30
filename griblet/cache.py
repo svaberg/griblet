@@ -54,14 +54,13 @@ class Cache:
         """Add one cheap direct cached path for `field` if it is not present yet."""
         if field in self._cached_paths:
             return
-        record = {
-            "needs": (),
-            "func": lambda field=field: self._cache[field],
-            "cost": self.cached_cost,
-            "metadata": {"description": "Cache"},
-        }
-        self.graph.paths.setdefault(field, []).append(record)
-        self._cached_paths[field] = record
+        self.graph.add(
+            field,
+            lambda field=field: self._cache[field],
+            cost=self.cached_cost,
+            metadata={"description": "Cache"},
+        )
+        self._cached_paths[field] = self.graph.paths[field][-1]
         logger.info("Added cached path for %s", field)
 
     def _store(self, field, value):

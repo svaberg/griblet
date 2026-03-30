@@ -19,10 +19,10 @@ def field_ordinal_levels(comp_graph, direction="out_to_dep"):
     field_graph = nx.DiGraph()
     for out, paths in comp_graph.paths.items():
         field_graph.add_node(out)
-        for path in paths:
-            if not path["needs"]:
+        for record in paths:
+            if not record.needs:
                 continue
-            for need in path["needs"]:
+            for need in record.needs:
                 field_graph.add_node(need)
                 if direction == "out_to_dep":
                     field_graph.add_edge(out, need)
@@ -61,8 +61,8 @@ def and_or_graph(computation_graph):
         field_node = ("F", out)
         graph.add_node(field_node, kind="field", field=out, label=out)
 
-        for index, path in enumerate(paths):
-            if not path["needs"]:
+        for index, record in enumerate(paths):
+            if not record.needs:
                 continue
 
             recipe_node = ("R", out, index)
@@ -75,7 +75,7 @@ def and_or_graph(computation_graph):
             )
             graph.add_edge(field_node, recipe_node, kind="alt")
 
-            for need in path["needs"]:
+            for need in record.needs:
                 need_field = ("F", need)
                 graph.add_node(need_field, kind="field", field=need, label=need)
                 graph.add_edge(recipe_node, need_field, kind="req")
@@ -111,8 +111,8 @@ def _and_or_layout(computation_graph, graph):
 
         plotted_recipe_indices = [
             index
-            for index, path in enumerate(paths)
-            if path["needs"] and ("R", out, index) in graph
+            for index, record in enumerate(paths)
+            if record.needs and ("R", out, index) in graph
         ]
         if not plotted_recipe_indices:
             continue
@@ -394,6 +394,22 @@ def _draw_and_or_base(
     return graph, pos
 
 
+def _path_index_in_graph(computation_graph, path):
+    child_names = tuple(need.name for need in path.needs)
+    child_cost = sum(need.cost for need in path.needs)
+    for index, record in enumerate(computation_graph.paths[path.name]):
+        if record.func is not path.func:
+            continue
+        if record.needs != child_names:
+            continue
+        if record.metadata != path.metadata:
+            continue
+        if abs((record.cost + child_cost) - path.cost) > 1e-12:
+            continue
+        return index
+    raise RuntimeError(f"No graph path matches resolved path node {path.name!r}")
+
+
 def _collect_path_display_nodes_edges(computation_graph, path):
     nodes = set()
     edges = set()
@@ -405,10 +421,7 @@ def _collect_path_display_nodes_edges(computation_graph, path):
         if node.is_source or not node.needs:
             return
 
-        if node._record is None:
-            raise RuntimeError(f"No chosen graph record for path node {node.name!r}")
-
-        recipe_node = ("R", node.name, computation_graph.paths[node.name].index(node._record))
+        recipe_node = ("R", node.name, _path_index_in_graph(computation_graph, node))
         nodes.add(recipe_node)
         edges.add((recipe_node, field_node))
 

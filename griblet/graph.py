@@ -1,5 +1,6 @@
 """Graph of paths to reach data."""
 
+from dataclasses import dataclass
 import logging
 
 from .path import Path
@@ -8,13 +9,21 @@ from .path import Path
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class _PathRecord:
+    """One local graph entry for reaching a field."""
+
+    needs: tuple
+    func: object
+    cost: float
+    metadata: dict
+
+
 class Graph:
     """
     Registry of all known paths that derive named data.
 
-    Each output name can have more than one path to reach it. A path record
-    consists of the function to call, the names it needs, its cost, and
-    optional metadata used for display.
+    Each output name can have more than one local graph path to reach it.
     """
 
     def __init__(self, other_graph=None):
@@ -42,12 +51,9 @@ class Graph:
         """
         needs = tuple(needs or ())
         metadata = dict(metadata or {})
-        self.paths.setdefault(name, []).append({
-            "needs": needs,
-            "func": func,
-            "cost": cost,
-            "metadata": metadata,
-        })
+        self.paths.setdefault(name, []).append(
+            _PathRecord(needs=needs, func=func, cost=cost, metadata=metadata)
+        )
         logger.debug(
             "Added path %d for %s with needs=%s and cost=%s",
             len(self.paths[name]),
@@ -141,10 +147,10 @@ class Graph:
         lines = []
         for name in sorted(self.paths):
             lines.append(f"{name}:")
-            for i, path in enumerate(self.paths[name], 1):
-                meta_str = ", ".join(f"{k}={v}" for k, v in path["metadata"].items())
+            for i, record in enumerate(self.paths[name], 1):
+                meta_str = ", ".join(f"{k}={v}" for k, v in record.metadata.items())
                 lines.append(
-                    f"  Path {i}: needs={path['needs']}, cost={path['cost']}"
+                    f"  Path {i}: needs={record.needs}, cost={record.cost}"
                     + (f", meta={meta_str}" if meta_str else "")
                 )
         return "\n".join(lines)
