@@ -4,6 +4,7 @@ import numpy as np
 
 from griblet import Graph
 from griblet.loader import BlockLoader
+from griblet.path import _format_cost
 
 _fallback_gamma = 5/3
 _mu_0 = 4e-7 * np.pi
@@ -194,8 +195,8 @@ if __name__ == "__main__":
     warm_path = graph.path("Ma (U/c_s)")
 
     print("\n=== After One Block Load ===\n")
-    print(f"cost before: {cold_path.cost}")
-    print(f"cost after: {warm_path.cost}\n")
+    print(f"cost before: {_format_cost(cold_path.cost)}")
+    print(f"cost after: {_format_cost(warm_path.cost)}\n")
     print(warm_path)
 
     print("\n=== Computed Values ===\n")
@@ -214,8 +215,8 @@ if __name__ == "__main__":
     rerouted_mach = graph.compute("Ma (U/c_s)")
 
     print("\n=== After Removing the Cheaper c_s Path ===\n")
-    print(f"cost before: {path_before.cost}")
-    print(f"cost after: {rerouted_path.cost}\n")
+    print(f"cost before: {_format_cost(path_before.cost)}")
+    print(f"cost after: {_format_cost(rerouted_path.cost)}\n")
     print(rerouted_path)
     print("\nrerouted Ma (U/c_s) first three values:")
     print(rerouted_mach[:3])

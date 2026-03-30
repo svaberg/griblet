@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 import logging
 
-from .path import Path
+from .path import Path, _format_cost
 from .pathfinder import Pathfinder
 
 
@@ -154,7 +154,7 @@ class Graph:
             for i, step in enumerate(self.paths[name], 1):
                 meta_str = ", ".join(f"{k}={v}" for k, v in step.metadata.items())
                 lines.append(
-                    f"  Path {i}: needs={step.needs}, cost={step.cost}"
+                    f"  Path {i}: needs={step.needs}, cost={_format_cost(step.cost)}"
                     + (f", meta={{{meta_str}}}" if meta_str else "")
                 )
         return "\n".join(lines)

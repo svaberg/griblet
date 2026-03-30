@@ -4,6 +4,14 @@ from dataclasses import dataclass, field
 from typing import Callable, Dict, List
 
 
+def _format_cost(cost):
+    """Render a cost without distracting floating-point artifacts."""
+    text = f"{cost:.12g}"
+    if "e" not in text and "." not in text:
+        return text + ".0"
+    return text
+
+
 @dataclass
 class Path:
     """
@@ -36,7 +44,7 @@ class Path:
         This is the internal formatter used by `__str__`.
         """
         meta_str = ", ".join(f"{key}={value}" for key, value in self.metadata.items())
-        line = " " * indent + f"{self.name} (cost: {self.cost})"
+        line = " " * indent + f"{self.name} (cost: {_format_cost(self.cost)})"
         if meta_str:
             line += f", meta={{{meta_str}}}"
         lines = [line]
@@ -50,4 +58,7 @@ class Path:
 
         The output starts with a one-line header and then shows the path tree.
         """
-        return f"Path to {self.name} (total cost: {self.cost})\n" + "\n".join(self._format_lines())
+        return (
+            f"Path to {self.name} (total cost: {_format_cost(self.cost)})\n"
+            + "\n".join(self._format_lines())
+        )
