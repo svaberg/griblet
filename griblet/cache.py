@@ -52,7 +52,6 @@ class Cache:
                     field,
                     lambda field=field: self.load(field),
                     cost=self.load_cost if self.load_cost is not None else self.loader.cost(field),
-                    metadata={"description": type(loader).__name__},
                 )
 
     def _add_cached_step(self, field):
@@ -63,7 +62,6 @@ class Cache:
             field,
             lambda field=field: self._cache[field],
             cost=self.cached_cost,
-            metadata={"description": "Cache"},
         )
         self._cached_steps[field] = self.graph.paths[field][-1]
         logger.info("Added cached path for %s", field)

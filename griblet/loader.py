@@ -72,7 +72,6 @@ class Loader:
                 name,
                 lambda name=name: self.load(name),
                 cost=self.cost(name) if cost is None else cost,
-                metadata={"description": type(self).__name__},
             )
         return graph
 
@@ -161,7 +160,6 @@ class BlockLoader(Loader):
                     field,
                     lambda field=field: self._serve(field),
                     cost=self.load_cost,
-                    metadata={"description": type(self).__name__},
                 )
             self._cache = Cache(
                 graph,

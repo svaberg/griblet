@@ -50,7 +50,7 @@ class BoxLoader(Loader):
                 name,
                 lambda name=name: self.load(name),
                 cost=self.cost(name) if cost is None else cost,
-                metadata={"description": type(self).__name__, "unit": self._units[name]},
+                metadata={"unit": self._units[name]},
             )
         return graph
 
