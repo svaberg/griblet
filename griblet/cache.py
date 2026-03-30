@@ -42,13 +42,9 @@ class Cache:
             graph.add(
                 field,
                 lambda field=field: self.load(field),
-                cost=self._load_cost(field),
+                cost=self.load_cost if self.load_cost is not None else self.loader.cost(field),
                 metadata={"description": type(loader).__name__},
             )
-
-    def _load_cost(self, field):
-        """Return the declared cost of loading `field` from the wrapped loader."""
-        return self.load_cost if self.load_cost is not None else self.loader.cost(field)
 
     def _add_cached_step(self, field):
         """Add one cheap direct cached step for `field` if it is not present yet."""
