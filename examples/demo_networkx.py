@@ -9,7 +9,7 @@ logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 from griblet import Graph, NoPathError
 
-from box_demo import BoxLoader, make_box_graph
+from box_demo import BoxLoader, box_graph
 from demo_batsrus import WindLoader, make_wind_graph
 import plots
 
@@ -53,5 +53,5 @@ def plot_networkx_graph(loader, paths_graph, filename, *, target="volume", rerou
 
 
 if __name__ == "__main__":
-    plot_networkx_graph(BoxLoader(), make_box_graph(), "demo_networkx", target="volume", reroute_key="area")
+    plot_networkx_graph(BoxLoader(), box_graph(), "demo_networkx", target="volume", reroute_key="area")
     plot_networkx_graph(WindLoader(), make_wind_graph(), "demo_batsrus_networkx", target="Ma (U/c_s)", reroute_key="GAMMA")

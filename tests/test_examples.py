@@ -3,14 +3,17 @@ import numpy as np
 import pytest
 
 from griblet import NoPathError
+from griblet import Graph
 
 from demo_batsrus import build_wind_graph
-from box_demo import build_box_graph, ureg
+from box_demo import BoxLoader, box_graph, ureg
 import plots
 
 
 def test_demo_best_path_flow():
-    graph = build_box_graph()
+    graph = Graph()
+    graph.merge(BoxLoader().as_graph())
+    graph.merge(box_graph())
 
     path = graph.path("volume")
 
@@ -23,7 +26,9 @@ def test_demo_best_path_flow():
 
 
 def test_demo_rerouting_flow():
-    graph = build_box_graph()
+    graph = Graph()
+    graph.merge(BoxLoader().as_graph())
+    graph.merge(box_graph())
 
     path_1 = graph.path("volume")
     value_1 = graph.compute("volume")
@@ -43,7 +48,9 @@ def test_demo_rerouting_flow():
 
 
 def test_box_extra_fields():
-    graph = build_box_graph()
+    graph = Graph()
+    graph.merge(BoxLoader().as_graph())
+    graph.merge(box_graph())
 
     base_perimeter = graph.compute("base_perimeter")
     linear_size = graph.compute("linear_size")
@@ -64,7 +71,9 @@ def test_batsrus_example_flow_resolves_and_evaluates():
 
 
 def test_plot_helpers_render_box_graph():
-    graph = build_box_graph()
+    graph = Graph()
+    graph.merge(BoxLoader().as_graph())
+    graph.merge(box_graph())
     path = graph.path("volume")
 
     fig, ax = plt.subplots()

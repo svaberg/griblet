@@ -4,13 +4,15 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-from griblet import NoPathError
+from griblet import Graph, NoPathError
 
-from box_demo import build_box_graph
+from box_demo import BoxLoader, box_graph
 
 
 if __name__ == "__main__":
-    graph = build_box_graph()
+    graph = Graph()
+    graph.merge(BoxLoader().as_graph())
+    graph.merge(box_graph())
 
     path1 = graph.path("volume")
     val1 = graph.compute("volume")

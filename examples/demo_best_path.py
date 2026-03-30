@@ -1,9 +1,13 @@
 """Print the cheapest resolved box-volume path and evaluate it twice."""
 
-from box_demo import build_box_graph, ureg
+from griblet import Graph
+
+from box_demo import BoxLoader, box_graph, ureg
 
 if __name__ == "__main__":
-    graph = build_box_graph()
+    graph = Graph()
+    graph.merge(BoxLoader().as_graph())
+    graph.merge(box_graph())
     path = graph.path("volume")
 
     print("\n=== Best Path Demo (Box Volume, multiple paths) ===\n")

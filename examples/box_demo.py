@@ -40,7 +40,7 @@ class BoxLoader(Loader):
         return spec["value"] * ureg(spec["unit"])
 
 
-def make_box_graph():
+def box_graph():
     """Build the derived box-geometry graph without any source data."""
     graph = Graph()
 
@@ -59,12 +59,4 @@ def make_box_graph():
     def volume_from_lwh(length, width, height): return length * width * height
     graph.add('volume', volume_from_lwh, needs=['length', 'width', 'height'], cost=3.0, metadata={'unit': ureg.meter**3})
 
-    return graph
-
-
-def build_box_graph():
-    """Build the full box example graph with plain loader-backed sources."""
-    graph = Graph()
-    graph.merge(BoxLoader().as_graph())
-    graph.merge(make_box_graph())
     return graph
