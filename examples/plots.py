@@ -418,7 +418,7 @@ def _collect_path_display_nodes_edges(computation_graph, path):
         field_node = ("F", node.name)
         nodes.add(field_node)
 
-        if node.is_source or not node.needs:
+        if not node.needs:
             return
 
         recipe_node = ("R", node.name, _path_index_in_graph(computation_graph, node))

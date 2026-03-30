@@ -137,7 +137,7 @@ def test_pathfinder_avoids_cycle_when_alternative_exists():
     path = Pathfinder(graph).find_path("x")
 
     assert path.cost == pytest.approx(5.0)
-    assert path.is_source is True
+    assert path.needs == []
     assert graph.compute("x") == 2
 
 

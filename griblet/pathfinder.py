@@ -27,7 +27,7 @@ def follow_path(path: Path):
 
     def follow(node: Path):
         logger.debug("Following %s", node.name)
-        if node.is_source:
+        if not node.needs:
             logger.debug("Loaded source %s", node.name)
             return node.func()
 
@@ -109,7 +109,6 @@ class Pathfinder:
                         name=target,
                         cost=total_cost,
                         func=step.func,
-                        is_source=not needs,
                         needs=child_paths,
                         metadata=dict(step.metadata),
                     )

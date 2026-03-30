@@ -26,7 +26,6 @@ class Path:
     name: str
     cost: float
     func: Callable
-    is_source: bool = False
     needs: List["Path"] = field(default_factory=list)
     metadata: Dict = field(default_factory=dict)
 
@@ -36,7 +35,7 @@ class Path:
 
         This is the internal formatter used by `__str__`.
         """
-        leaf = " [source]" if self.is_source else ""
+        leaf = " [source]" if not self.needs else ""
         desc = self.metadata.get("description", "")
         unit = self.metadata.get("unit", "")
         line = " " * indent + f"{self.name} (cost: {self.cost}){leaf} {desc} {unit}".rstrip()
