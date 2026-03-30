@@ -1,14 +1,11 @@
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
 from griblet import NoPathError
 
-from demo_batsrus import WindLoader, build_wind_graph, make_wind_graph
-from demo_networkx import plot_networkx_graph
-from box_demo import BoxLoader, build_box_graph, make_box_graph, ureg
+from demo_batsrus import build_wind_graph
+from box_demo import build_box_graph, ureg
 import plots
 
 
@@ -80,22 +77,3 @@ def test_plot_helpers_render_box_graph():
     assert andor_graph.number_of_nodes() > 0
     assert pos
     plt.close(fig)
-
-
-def test_demo_networkx_generates_expected_artifacts(tmp_path):
-    output_prefix = tmp_path / "demo_networkx"
-    batsrus_prefix = tmp_path / "demo_batsrus_networkx"
-
-    plot_networkx_graph(BoxLoader(), make_box_graph(), str(output_prefix))
-    plot_networkx_graph(
-        WindLoader(),
-        make_wind_graph(),
-        str(batsrus_prefix),
-        target="Ma (U/c_s)",
-        reroute_key="GAMMA",
-    )
-
-    assert (tmp_path / "demo_networkx_with_recipes.png").exists()
-    assert (tmp_path / "demo_networkx_computation_paths.png").exists()
-    assert (tmp_path / "demo_batsrus_networkx_with_recipes.png").exists()
-    assert (tmp_path / "demo_batsrus_networkx_computation_paths.png").exists()

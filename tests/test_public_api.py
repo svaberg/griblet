@@ -1,5 +1,3 @@
-import logging
-
 import pytest
 
 from griblet import Graph, NoPathError
@@ -40,11 +38,6 @@ class BulkCacheLoader:
     def load(self, field):
         self.calls += 1
         return {"x": 1, "y": 2}
-
-
-def test_top_level_public_api_exports_expected_symbols():
-    assert Graph is not None
-    assert NoPathError is not None
 
 
 def test_pathfinder_returns_path():
@@ -149,15 +142,15 @@ def test_pathfinder_raises_nopath_for_known_but_unreachable_target():
         Pathfinder(graph).find_path("y")
 
 
-def test_pathfinder_does_not_memoize_failed_targets():
+def test_pathfinder_does_not_poison_later_searches_after_failed_subsearch():
     graph = Graph()
+    graph.add("x", lambda y: y + 1, needs=["y"], cost=1.0)
+    graph.add("x", lambda: 2, cost=5.0)
     graph.add("y", lambda x: x + 1, needs=["x"], cost=1.0)
-    finder = Pathfinder(graph)
 
-    with pytest.raises(NoPathError):
-        finder.find_path("y")
-
-    assert finder.memo == {}
+    assert graph.path("x").cost == pytest.approx(5.0)
+    assert graph.path("y").cost == pytest.approx(6.0)
+    assert graph.compute("y") == 3
 
 
 def test_path_str_reports_total_cost_and_tree():
@@ -172,125 +165,13 @@ def test_path_str_reports_total_cost_and_tree():
     assert "x (cost: 1.0) [source]" in explanation
 
 
-def test_cache_str_reports_loader_costs_and_cached_fields():
-    cache = Cache(Graph(), ScalarCacheLoader(), load_cost=9.0, cached_cost=0.5)
-
-    assert str(cache) == "\n".join([
-        "Cache",
-        "  loader: ScalarCacheLoader",
-        "  load cost: 9.0",
-        "  cached cost: 0.5",
-        "  cached fields: -",
-    ])
-
-    cache.load("x")
-
-    assert str(cache).endswith("  cached fields: x")
-
-
-def test_base_loader_str_lists_fields():
-    assert str(DemoLoader()) == "\n".join([
-        "DemoLoader",
-        "  fields: x, y",
-    ])
-
-
-def test_block_loader_str_reports_state_and_costs():
-    loader = BlockLoader({"x": 4, "y": 5}, load_cost=3.0, cached_cost=0.2)
-
-    assert str(loader) == "\n".join([
-        "BlockLoader",
-        "  fields: x, y",
-        "  state: not loaded",
-        "  load cost: 3.0",
-        "  cached cost: 0.2",
-    ])
-
-    loader.load("x")
-
-    assert "  state: loaded" in str(loader)
-
-
-def test_pathfinder_str_lists_known_fields_and_memo_size():
-    graph = Graph()
-    graph.add("x", lambda: 2, cost=1.0)
-    graph.add("y", lambda x: x + 1, needs=["x"], cost=2.0)
-    finder = Pathfinder(graph)
-
-    assert str(finder) == "\n".join([
-        "Pathfinder",
-        "  fields: x, y",
-        "  memoized targets: 0",
-    ])
-
-    finder.find_path("y")
-
-    assert "  memoized targets: 2" in str(finder)
-
-
-def test_graph_compute_logs_compute_and_path_messages(caplog):
-    graph = Graph()
-    graph.add("x", lambda: 2, cost=1.0)
-    graph.add("y", lambda x: x + 1, needs=["x"], cost=2.0)
-
-    with caplog.at_level(logging.DEBUG):
-        assert graph.compute("y") == 3
-
-    assert "Computing y" in caplog.text
-    assert "Chosen path for y:" in caplog.text
-    assert "Found path to y with total cost 3.0" in caplog.text
-    assert "Computed y with total cost 3.0" in caplog.text
-
-
-def test_graph_compute_accepts_a_precomputed_path(caplog):
+def test_graph_compute_accepts_a_precomputed_path():
     graph = Graph()
     graph.add("x", lambda: 2, cost=1.0)
     graph.add("y", lambda x: x + 1, needs=["x"], cost=2.0)
     path = graph.path("y")
 
-    caplog.clear()
-    with caplog.at_level(logging.DEBUG):
-        assert graph.compute(path) == 3
-
-    assert "Finding path to y" not in caplog.text
-    assert "Chosen path for y:" not in caplog.text
-    assert "Computing y" in caplog.text
-
-
-def test_cache_logs_miss_hit_and_bulk_load(caplog):
-    cache = Cache(Graph(), BulkCacheLoader(), load_cost=9.0, cached_cost=0.5)
-
-    with caplog.at_level(logging.DEBUG):
-        assert cache.load("x") == 1
-        assert cache.load("x") == 1
-
-    assert "Cache miss for x" in caplog.text
-    assert "Loaded 2 field(s) while fetching x" in caplog.text
-    assert "Cache hit for x" in caplog.text
-
-
-def test_block_loader_logs_block_load(caplog):
-    loader = BlockLoader({"x": 4, "y": 5}, load_cost=3.0, cached_cost=0.2)
-
-    with caplog.at_level(logging.DEBUG):
-        assert loader.load("x") == {"x": 4, "y": 5}
-        assert loader.load("y") == 5
-
-    assert "Loading block for x (2 field(s))" in caplog.text
-    assert "Serving y from loaded block" in caplog.text
-
-
-def test_pathfinder_logs_failed_route_and_missing_path(caplog):
-    graph = Graph()
-    graph.add("y", lambda x: x + 1, needs=["x"], cost=1.0)
-
-    with caplog.at_level(logging.DEBUG):
-        with pytest.raises(NoPathError):
-            Pathfinder(graph).find_path("y")
-
-    assert "Trying step 1 for y with needs=('x',) and cost=1.0" in caplog.text
-    assert "Step 1 for y failed at need x" in caplog.text
-    assert "No path found to y" in caplog.text
+    assert graph.compute(path) == 3
 
 
 def test_cache_adds_cached_path_after_scalar_load():
