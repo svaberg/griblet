@@ -1,3 +1,5 @@
+"""Plot helpers for the example graphs and resolved paths."""
+
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -16,6 +18,7 @@ Y_PADDING = 1.5
 
 
 def field_ordinal_levels(comp_graph, direction="out_to_dep"):
+    """Assign each field a layered level for left-to-right AND/OR layouts."""
     field_graph = nx.DiGraph()
     for out, paths in comp_graph.paths.items():
         field_graph.add_node(out)
@@ -435,6 +438,7 @@ def _collect_path_display_nodes_edges(computation_graph, path):
 
 
 def plot_and_or_graph(computation_graph, ax, title="Computation graph"):
+    """Draw the full AND/OR graph for a computation graph."""
     graph = and_or_graph(computation_graph)
     recipe_colors = _recipe_color_map(graph)
     graph, pos = _draw_and_or_base(
@@ -457,6 +461,7 @@ def plot_computation_paths(
     colors=None,
     title="Computation paths",
 ):
+    """Draw one or more resolved paths on top of the full AND/OR graph."""
     graph = and_or_graph(computation_graph)
     path_nodes_edges = [
         _collect_path_display_nodes_edges(computation_graph, tree)

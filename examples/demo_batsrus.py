@@ -1,3 +1,5 @@
+"""BATSRUS-style example graph with placeholder NumPy field data."""
+
 import numpy as np
 
 from griblet import Graph
@@ -52,6 +54,7 @@ class WindLoader(BaseLoader):
 
 
 def make_wind_graph():
+    """Build the derived BATSRUS-style graph without source fields attached."""
     graph = Graph()
 
     # Star radius coordinates
@@ -140,6 +143,7 @@ def make_wind_graph():
 
 
 def build_wind_graph():
+    """Build the full BATSRUS-style example with cached source data."""
     graph = make_wind_graph()
     Cache(graph, WindLoader(), cached_cost=0.05)
     return graph

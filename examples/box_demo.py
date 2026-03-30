@@ -1,3 +1,5 @@
+"""Small box-geometry example used by the demo scripts and tests."""
+
 import numpy as np
 import pint
 
@@ -9,6 +11,8 @@ ureg = pint.UnitRegistry()
 
 
 class BoxLoader(BaseLoader):
+    """Provide primitive box fields as direct source data."""
+
     def __init__(self):
         super().__init__()
         self._fields = {
@@ -20,6 +24,7 @@ class BoxLoader(BaseLoader):
 
 
 def make_box_graph():
+    """Build the derived box-geometry graph without any source data."""
     graph = Graph()
 
     def area_from_lw(length, width): return length * width
@@ -41,6 +46,7 @@ def make_box_graph():
 
 
 def build_box_graph():
+    """Build the full box example graph with cached loader-backed sources."""
     graph = make_box_graph()
     Cache(graph, BoxLoader(), cached_cost=0.05)
     return graph

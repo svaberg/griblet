@@ -1,3 +1,5 @@
+"""Show how path choice changes when box-graph fields are removed."""
+
 import logging
 
 logging.basicConfig(level=logging.INFO)

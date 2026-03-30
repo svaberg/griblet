@@ -1,3 +1,5 @@
+"""Print the cheapest resolved box-volume path and evaluate it twice."""
+
 from box_demo import build_box_graph, ureg
 
 if __name__ == "__main__":

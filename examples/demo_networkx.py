@@ -1,3 +1,5 @@
+"""Render the box and BATSRUS example graphs as AND/OR diagrams."""
+
 import matplotlib.pyplot as plt
 import logging
 import math
@@ -13,6 +15,7 @@ import plots
 
 
 def plot_networkx_graph(loader, paths_graph, filename, *, target="volume", reroute_key="area"):
+    """Plot a full graph and a rerouted-path comparison for one target."""
     loader_graph = loader.as_graph()
     graph = Graph(loader_graph)
 
