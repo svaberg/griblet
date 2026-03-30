@@ -35,9 +35,8 @@ class Path:
 
         This is the internal formatter used by `__str__`.
         """
-        leaf = " [source]" if not self.needs else ""
         meta_str = ", ".join(f"{key}={value}" for key, value in self.metadata.items())
-        line = " " * indent + f"{self.name} (cost: {self.cost}){leaf}"
+        line = " " * indent + f"{self.name} (cost: {self.cost})"
         if meta_str:
             line += f", meta={{{meta_str}}}"
         lines = [line]

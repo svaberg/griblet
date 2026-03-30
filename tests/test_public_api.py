@@ -162,7 +162,7 @@ def test_path_str_reports_total_cost_and_tree():
 
     assert explanation.startswith("Path to y (total cost: 3.0)\n")
     assert "y (cost: 3.0)" in explanation
-    assert "x (cost: 1.0) [source]" in explanation
+    assert "x (cost: 1.0)" in explanation
 
 
 def test_graph_compute_accepts_a_precomputed_path():
