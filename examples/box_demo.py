@@ -10,6 +10,8 @@ from griblet.loader import Loader
 
 ureg = pint.UnitRegistry()
 BOX_DATA_PATH = Path(__file__).with_name("box_data.json")
+BOX_LOAD_COST = 10.0
+BOX_FORMULA_COST = 2.0
 
 
 class BoxLoader(Loader):
@@ -42,6 +44,12 @@ class BoxLoader(Loader):
         spec = json.loads(BOX_DATA_PATH.read_text())[field]
         return spec["value"] * self._units[field]
 
+    def cost(self, field):
+        """Use a high fixed cost so derived paths are preferred after loading."""
+        if field not in self._fields:
+            raise ValueError(f"Field '{field}' not found.")
+        return BOX_LOAD_COST
+
     def as_graph(self, cost=None):
         """Expose the source fields together with the units declared in JSON."""
         graph = Graph()
@@ -60,19 +68,19 @@ def box_graph():
     graph = Graph()
 
     def area_from_lw(length, width): return length * width
-    graph.add('area', area_from_lw, needs=['length', 'width'], cost=2.0, metadata={'kind': 'formula', 'unit': ureg.meter**2})
+    graph.add('area', area_from_lw, needs=['length', 'width'], cost=BOX_FORMULA_COST, metadata={'kind': 'formula', 'unit': ureg.meter**2})
 
     def base_perimeter(length, width): return 2 * (length + width)
-    graph.add('base_perimeter', base_perimeter, needs=['length', 'width'], cost=1.5, metadata={'kind': 'formula', 'unit': ureg.meter})
+    graph.add('base_perimeter', base_perimeter, needs=['length', 'width'], cost=BOX_FORMULA_COST, metadata={'kind': 'formula', 'unit': ureg.meter})
 
     def linear_size(length, width, height): return length + width + height
-    graph.add('linear_size', linear_size, needs=['length', 'width', 'height'], cost=1.0, metadata={'kind': 'formula', 'unit': ureg.meter})
+    graph.add('linear_size', linear_size, needs=['length', 'width', 'height'], cost=BOX_FORMULA_COST, metadata={'kind': 'formula', 'unit': ureg.meter})
 
     def volume_from_area_height(area, height): return area * height
-    graph.add('volume', volume_from_area_height, needs=['area', 'height'], cost=2.0, metadata={'kind': 'formula', 'unit': ureg.meter**3})
+    graph.add('volume', volume_from_area_height, needs=['area', 'height'], cost=BOX_FORMULA_COST, metadata={'kind': 'formula', 'unit': ureg.meter**3})
 
     def volume_from_lwh(length, width, height): return length * width * height
-    graph.add('volume', volume_from_lwh, needs=['length', 'width', 'height'], cost=3.0, metadata={'kind': 'formula', 'unit': ureg.meter**3})
+    graph.add('volume', volume_from_lwh, needs=['length', 'width', 'height'], cost=BOX_FORMULA_COST, metadata={'kind': 'formula', 'unit': ureg.meter**3})
 
     return graph
 
