@@ -67,11 +67,10 @@ class BaseLoader:
             type(self).__name__,
         )
         for name in self.fields():
-            path_cost = self.cost(name) if cost is None else cost
             graph.add(
                 name,
                 lambda name=name: self.load(name),
-                cost=path_cost,
+                cost=self.cost(name) if cost is None else cost,
                 metadata={"description": type(self).__name__},
             )
         return graph
