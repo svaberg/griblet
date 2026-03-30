@@ -149,6 +149,17 @@ def test_pathfinder_raises_nopath_for_known_but_unreachable_target():
         Pathfinder(graph).find_path("y")
 
 
+def test_pathfinder_does_not_memoize_failed_targets():
+    graph = Graph()
+    graph.add("y", lambda x: x + 1, needs=["x"], cost=1.0)
+    finder = Pathfinder(graph)
+
+    with pytest.raises(NoPathError):
+        finder.find_path("y")
+
+    assert finder.memo == {}
+
+
 def test_path_str_reports_total_cost_and_tree():
     graph = Graph()
     graph.add("x", lambda: 2, cost=1.0)

@@ -121,12 +121,11 @@ class Pathfinder:
                     )
 
         trail.remove(target)
-        self.memo[target] = best_path
-
         if best_path is None:
             logger.warning("No path found to %s", target)
             raise NoPathError(f"No path to {target}.")
 
+        self.memo[target] = best_path
         return best_path
 
     def find_path(self, target: str) -> Path:
