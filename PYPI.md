@@ -39,20 +39,20 @@ graph.add("height", lambda: 3.0)
 graph.add(
     "area",
     lambda length, width: length * width,
-    needs=["length", "width"],
+    needs=("length", "width"),
     cost=2.0,
 )
 
 graph.add(
     "volume",
     lambda area, height: area * height,
-    needs=["area", "height"],
+    needs=("area", "height"),
     cost=2.0,
 )
 graph.add(
     "volume",
     lambda length, width, height: length * width * height,
-    needs=["length", "width", "height"],
+    needs=("length", "width", "height"),
     cost=3.0,
 )
 
