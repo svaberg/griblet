@@ -1,53 +1,57 @@
-import networkx as nx
+"""Render the box and BATSRUS example graphs as AND/OR diagrams."""
+
 import matplotlib.pyplot as plt
 import logging
+import math
+
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
-from griblet import ComputationGraph
-from griblet import DependencySolver
+from griblet import Graph, NoPathError
 
-from room_demo import make_room_recipes_graph, RoomLoader
+from demo_box import BoxLoader, box_graph
+from demo_batsrus import WindLoader, make_wind_graph
 import plots
 
 
-def plot_networkx_graph(loader, recipes_graph, filename):
+def plot_networkx_graph(loader, paths_graph, filename, *, target="volume", reroute_key="area"):
+    """Plot a full graph and a rerouted-path comparison for one target."""
     loader_graph = loader.as_graph()
-    computation_graph = ComputationGraph(loader_graph)
+    graph = Graph(loader_graph)
 
-    print(computation_graph)
-    fig, ax = plt.subplots()
-    plots.plot_recipe_colored_edges_curved(computation_graph, ax=ax)
-    plt.savefig(filename + "_loader.png", dpi=150)
+    graph.merge(paths_graph)
+    print(graph)
+    field_count = len(graph.fields())
+    fig_height = max(7.0, 1.8 * math.sqrt(field_count))
+    fig_width = max(9.0, fig_height)
 
-    computation_graph.merge(recipes_graph)
-    print(computation_graph)
-    fig, ax = plt.subplots()
-    plots.plot_recipe_colored_edges_curved(computation_graph, ax=ax)
-    plt.savefig(filename + "_with_recipes.png", dpi=150)
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+    plots.plot_and_or_graph(graph, ax=ax)
+    fig.subplots_adjust(left=0.02, right=0.98, bottom=0.02, top=0.94)
+    fig.savefig(filename + "_with_recipes.png", dpi=150)
 
-    # Use the solver 
-    solver = DependencySolver(computation_graph)
-    cost1, tree1 = solver.resolve_field('volume')
+    try:
+        path1 = graph.path(target)
 
-    # (Optionally) remove 'area' as a recipe or node, then resolve again
-    computation_graph.recipes.pop('area', None)
-    solver2 = DependencySolver(computation_graph)
-    cost2, tree2 = solver2.resolve_field('volume')
+        rerouted_graph = Graph(loader.as_graph())
+        rerouted_graph.merge(paths_graph)
+        rerouted_graph.paths.pop(reroute_key, None)
+        path2 = rerouted_graph.path(target)
 
-    fig, ax = plt.subplots(figsize=(9, 7))
-    plots.plot_computation_paths(
-        computation_graph,
-        [tree1, tree2],  # list of tree roots
-        ax=ax,
-        labels=["Best path", "Path after removing area"],
-        title="Optimal computation paths before and after removing 'area'"
-    )
-    fig.tight_layout()
-    fig.savefig(filename + "_computation_paths.png", dpi=150)
+        fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+        plots.plot_computation_paths(
+            graph,
+            [path1, path2],
+            ax=ax,
+            labels=["Best path", f"Path after removing {reroute_key}"],
+            title=f"Optimal computation paths before and after removing {reroute_key!r}",
+        )
+        fig.subplots_adjust(left=0.02, right=0.98, bottom=0.02, top=0.94)
+        fig.savefig(filename + "_computation_paths.png", dpi=150)
+    except NoPathError as e:
+        print(f"Error during pathfinding: {e}")
 
 
 if __name__ == "__main__":
-    loader = RoomLoader()
-    room_recipies_graph = make_room_recipes_graph()
-    plot_networkx_graph(loader, room_recipies_graph, "demo_networkx.png")
+    plot_networkx_graph(BoxLoader(), box_graph(), "demo_networkx", target="volume", reroute_key="area")
+    plot_networkx_graph(WindLoader(), make_wind_graph(), "demo_batsrus_networkx", target="Ma (U/c_s)", reroute_key="GAMMA")

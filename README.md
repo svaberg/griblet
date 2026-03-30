@@ -5,63 +5,63 @@
 </tr>
 </table>
 
+[![PyPI](https://img.shields.io/badge/PyPI-griblet-blue)](https://pypi.org/project/griblet/) [![Version](https://img.shields.io/pypi/v/griblet)](https://pypi.org/project/griblet/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![DOI](https://zenodo.org/badge/996606023.svg)](https://doi.org/10.5281/zenodo.19239863) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/0a9aa6e148d845a780466a718a1f96b6)](https://app.codacy.com/gh/svaberg/griblet/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/0a9aa6e148d845a780466a718a1f96b6)](https://app.codacy.com/gh/svaberg/griblet/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 
-**Carve computation trees from a burl of dependencies.**
+The griblet knows the easiest path through your data.
 
-Griblet is a dynamic, cache-aware calculation engine for building and evaluating computation trees from a flexible graph of possible dependencies and recipes.
+- It thrives where there are multiple, looping paths.
+- It can account for cache and disk state.
+- It loves scientific post-processing.
 
-- Supports alternative computation paths for each result
-- Dynamic costs, including cache- and disk-aware lazy evaluation
-- Clean separation of recipes, cache, loader, and evaluation logic
-- Suitable for scientific post-processing, engineering workflows, and flexible data processing pipelines
+## Installation
 
-## Developer install
+Install `griblet` in the usual way:
+
 ```bash
-git clone https://github.com/svaberg/griblet.git
-cd griblet
-pip install -e '.[dev]'
+pip install griblet
 ```
+
+The `griblet` has no runtime dependencies.
+
 ## Example
 
-Start by building a computation graph. The graph below can reach `volume` in two ways: one through `area`, and one directly from `length`, `width`, and `height`.
+Start by describing common computational paths in your data. For example, below one can compute `volume` via two paths: via `area`, and directly from `length`, `width`, and `height`.
 
 ```python
-from griblet import ComputationGraph, DependencySolver, evaluate_tree
+from griblet import Graph
 
-graph = ComputationGraph()
+graph = Graph()
 
-graph.add_recipe("length", lambda: 5.0)
-graph.add_recipe("width", lambda: 4.0)
-graph.add_recipe("height", lambda: 3.0)
+graph.add("length", lambda: 5.0)
+graph.add("width", lambda: 4.0)
+graph.add("height", lambda: 3.0)
 
-graph.add_recipe(
+graph.add(
     "area",
     lambda length, width: length * width,
-    deps=["length", "width"],
+    needs=("length", "width"),
     cost=2.0,
 )
 
-graph.add_recipe(
+graph.add(
     "volume",
     lambda area, height: area * height,
-    deps=["area", "height"],
+    needs=("area", "height"),
     cost=2.0,
 )
-graph.add_recipe(
+graph.add(
     "volume",
     lambda length, width, height: length * width * height,
-    deps=["length", "width", "height"],
+    needs=("length", "width", "height"),
     cost=3.0,
 )
 
-solver = DependencySolver(graph)
-cost, tree = solver.resolve_field("volume")
-value = evaluate_tree(tree, graph)
-
-print(cost)
-print(value)
+print(graph.compute("volume"))
 ```
+The griblet finds the easiest path.
 
-If the graph has no valid path to the requested field, `griblet` raises `UnresolvableFieldError`.
+The griblet is okay with disconnected graphs; when there is no path to the requested field, `griblet` raises `NoPathError`. The user can then consider adding further computational paths with `graph.add`.
+
+For more examples, see the files in [examples/](examples/).
 
 ---
