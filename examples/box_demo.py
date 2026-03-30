@@ -60,3 +60,36 @@ def box_graph():
     graph.add('volume', volume_from_lwh, needs=['length', 'width', 'height'], cost=3.0, metadata={'unit': ureg.meter**3})
 
     return graph
+
+
+if __name__ == "__main__":
+    loader = BoxLoader()
+    print("\n=== Loader ===\n")
+    print(loader)
+
+    loader_graph = loader.as_graph()
+    print("\n=== Loader Graph ===\n")
+    print(loader_graph)
+
+    derived_graph = box_graph()
+    print("\n=== Derived Graph ===\n")
+    print(derived_graph)
+
+    graph = Graph()
+    graph.merge(loader_graph)
+    graph.merge(derived_graph)
+    print("\n=== Full Graph ===\n")
+    print(graph)
+
+    path = graph.path("volume")
+    print("\n=== Best Path to volume ===\n")
+    print(path)
+
+    volume = graph.compute("volume")
+    base_perimeter = graph.compute("base_perimeter")
+    linear_size = graph.compute("linear_size")
+
+    print("\n=== Computed Values ===\n")
+    print("volume:", volume)
+    print("base_perimeter:", base_perimeter)
+    print("linear_size:", linear_size)
